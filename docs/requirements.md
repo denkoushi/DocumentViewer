@@ -156,3 +156,28 @@
   3. エラー画面はクリック不要で自動復帰。必要に応じて「待機画面へ戻る」ボタンを設ける。
   4. ビューワ内で右クリックメニューや不要なUI要素が出ないよう Chromium kiosk モードを利用。
 
+
+## インポートツール試作スクリプト
+- `scripts/document-importer.sh`: 単発実行で USB マウントポイントを引数に取り、PDF コピー／ログ出力／ビューワ再起動まで行うシェルスクリプト。
+  - 依存コマンド: `mountpoint`, `install`, `systemctl` (任意)。
+  - 導入手順例:
+    1. `sudo install -m 755 scripts/document-importer.sh /usr/local/bin/document-importer.sh`
+    2. `/home/pi/document-viewer/documents` と `/home/pi/document-viewer/imports` を作成。
+    3. `sudo chown -R pi:pi /home/pi/document-viewer` (必要に応じて修正)。
+- `scripts/document-importer-daemon.sh`: `/media/pi` を inotify 監視し、USB 追加時に `document-importer.sh` を呼び出すデーモンスクリプト。
+  - 依存コマンド: `inotifywait` (inotify-tools パッケージ), `mountpoint`。
+  - 導入手順例:
+    1. `sudo apt install inotify-tools`
+    2. `sudo install -m 755 scripts/document-importer-daemon.sh /usr/local/bin/document-importer-daemon.sh`
+    3. `sudo install -m 755 scripts/document-importer.sh /usr/local/bin/document-importer.sh`
+    4. `sudo install -m 644 systemd/document-importer.service /etc/systemd/system/document-importer.service`
+    5. `sudo systemctl daemon-reload`
+    6. `sudo systemctl enable --now document-importer.service`
+    7. `journalctl -u document-importer.service -f` で動作ログを確認。
+
+## UI プロトタイプ
+- `ui/prototype.html` に待機・表示・エラーの3画面を並べたスタティックモックを作成。
+  - ブラウザで開いてレイアウトを確認できる。
+  - CSS でページ送りボタンサイズや情報密度を調整しやすいようにしてある。
+  - 実装時は Chromium kiosk モード＋PDF.js などを組み合わせる想定。
+
