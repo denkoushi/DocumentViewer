@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>Document Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Document Viewer</h1>
+    <div class="status" id="status-indicator">待機中</div>
+  </header>
+  <main class="app" id="app" data-state="idle">
+    <section class="screen" data-screen="idle">
+      <div class="screen__content">
+        <h2>バーコードをスキャンしてください</h2>
+        <p>移動票のバーコードを読み取ると該当部品の作業要領書が表示されます。</p>
+        <label class="barcode-input" for="barcode-input">バーコード入力欄</label>
+        <input id="barcode-input" type="text" autocomplete="off" inputmode="text" />
+      </div>
+      <footer class="screen__footer">
+        <span>USB に最新の PDF をコピーして挿入すると自動更新されます。</span>
+        <button type="button" id="manual-open" class="secondary">入力を手動で確定</button>
+      </footer>
+    </section>
+
+    <section class="screen" data-screen="viewer">
+      <div class="screen__content screen__content--viewer">
+        <header class="viewer-header">
+          <div>
+            <h2 id="viewer-part-number">部品番号</h2>
+            <p id="viewer-filename" class="viewer-meta"></p>
+          </div>
+          <button type="button" id="return-to-idle" class="secondary">待機画面に戻る</button>
+        </header>
+        <div class="viewer-frame">
+          <iframe id="pdf-frame" title="PDF Viewer" allow="clipboard-write" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+        </div>
+      </div>
+      <footer class="screen__footer">
+        <span>スクロールや埋め込みツールバーでページを移動できます。</span>
+        <span>別のバーコードを読み取ると自動的に切り替わります。</span>
+      </footer>
+    </section>
+
+    <section class="screen" data-screen="error">
+      <div class="screen__content">
+        <h2>該当資料が見つかりません</h2>
+        <p id="error-message">指定された部品番号の PDF が見つかりませんでした。</p>
+        <div class="timer" id="error-timer"></div>
+      </div>
+      <footer class="screen__footer">
+        <button type="button" id="error-reset" class="primary">待機画面に戻る</button>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
