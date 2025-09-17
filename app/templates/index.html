@@ -27,22 +27,28 @@
     </section>
 
     <section class="screen" data-screen="viewer">
-      <div class="screen__content screen__content--viewer">
-        <header class="viewer-header">
-          <div>
-            <h2 id="viewer-part-number">部品番号</h2>
-            <p id="viewer-filename" class="viewer-meta"></p>
+      <div class="viewer-shell">
+        <div class="viewer-main">
+          <div class="viewer-meta-bar">
+            <div>
+              <h2 id="viewer-part-number">部品番号</h2>
+              <p id="viewer-filename" class="viewer-meta__filename"></p>
+            </div>
+            <div class="viewer-actions">
+              <button type="button" id="return-to-idle" class="secondary">待機画面に戻る</button>
+            </div>
           </div>
-          <button type="button" id="return-to-idle" class="secondary">待機画面に戻る</button>
-        </header>
-        <div class="viewer-frame">
-          <iframe id="pdf-frame" title="PDF Viewer" allow="clipboard-write"></iframe>
+          <div class="viewer-document">
+            <iframe id="pdf-frame" title="PDF Viewer" allow="clipboard-write"></iframe>
+          </div>
         </div>
+        <aside class="viewer-side">
+          <div class="viewer-side__content">
+            <h3>追加情報</h3>
+            <p class="viewer-side__placeholder">ここに工程メモや安全注意などを表示できます。</p>
+          </div>
+        </aside>
       </div>
-      <footer class="screen__footer">
-        <span>スクロールや埋め込みツールバーでページを移動できます。</span>
-        <span>別のバーコードを読み取ると自動的に切り替わります。</span>
-      </footer>
     </section>
 
     <section class="screen" data-screen="error">
