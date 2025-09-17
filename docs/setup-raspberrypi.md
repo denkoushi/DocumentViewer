@@ -89,3 +89,15 @@ X-GNOME-Autostart-enabled=true
   <iframe id="pdf-frame" title="PDF Viewer" allow="clipboard-write"></iframe>
   ```
 - USB 自動インポートの systemd サービスは別途 `document-importer.service` を導入予定。
+
+
+## 運用時の安全な更新手順
+1. ターミナルまたは SSH で Raspberry Pi に接続し、`tools02` ユーザーでログインする。
+2. Document Viewer を停止: `sudo systemctl stop document-viewer.service`
+3. リポジトリを更新: `cd ~/DocumentViewer && git fetch && git pull`
+4. 依存パッケージを更新: `source ~/document-viewer-venv/bin/activate && pip install -r ~/DocumentViewer/app/requirements.txt`
+5. サービスを再起動: `sudo systemctl daemon-reload` (必要に応じて) および `sudo systemctl restart document-viewer.service`
+6. 状態確認: `sudo systemctl status document-viewer.service` が `active (running)` であることを確認。
+7. Chromium が自動で再接続しない場合は `Ctrl+R` または再起動 (`sudo reboot`) で画面を更新する。
+
+> 注意: 仮想環境は `/home/tools02/document-viewer-venv` に配置している。誤ってリポジトリ直下に `.venv` を作成すると `git pull` で競合するので、常にこちらの環境を利用する。
