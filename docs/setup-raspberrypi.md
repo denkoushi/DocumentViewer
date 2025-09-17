@@ -101,3 +101,30 @@ X-GNOME-Autostart-enabled=true
 7. Chromium が自動で再接続しない場合は `Ctrl+R` または再起動 (`sudo reboot`) で画面を更新する。
 
 > 注意: 仮想環境は `/home/tools02/document-viewer-venv` に配置している。誤ってリポジトリ直下に `.venv` を作成すると `git pull` で競合するので、常にこちらの環境を利用する。
+
+## USB インポートサービスの設定
+1. スクリプト・ユニットを配置
+   ```bash
+   cd ~/DocumentViewer
+   sudo install -m 755 scripts/document-importer.sh /usr/local/bin/document-importer.sh
+   sudo install -m 755 scripts/document-importer-daemon.sh /usr/local/bin/document-importer-daemon.sh
+   sudo install -m 644 systemd/document-importer.service /etc/systemd/system/document-importer.service
+   ```
+2. 自動マウント先ディレクトリを確認。Raspberry Pi OS (Wayfire) では通常 `/media/<ユーザー名>` が使われる。
+   - ディレクトリが無い場合は `sudo mkdir -p /media/<ユーザー名>` で作成。
+   - `document-importer.service` の `Environment=WATCH_ROOT=...` を自分のユーザーに合わせて編集する (例: `/media/tools02`)。
+3. systemd を再読込して起動
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now document-importer.service
+   sudo systemctl status document-importer.service
+   ```
+   `Active: active (running)` と表示され、`inotifywait` が `/media/<ユーザー名>` を監視していれば準備完了。
+4. USB を挿入すると `/media/<ユーザー名>/<ボリューム名>` にマウントされ、`*.pdf` が `/home/pi/document-viewer/documents/`（必要に応じて `document-importer.sh` の `DEST_DIR` を調整）へコピーされる。
+   - ログは `/var/log/document-viewer/import-daemon.log` に記録される。
+   - 問題が起きたら `journalctl -u document-importer.service -n 50 -o cat` で確認。
+5. 動作確認
+   1. USB に `TEST-002.pdf` 等を保存して挿入。
+   2. コピー完了メッセージがログに出力され、ブラウザで対象部品番号を読み取ると新しい PDF が表示されることを確認。
+
+> 注意: 監視対象パスが存在しないとサービスが再起動ループになる。ユーザー名を変更した場合は `WATCH_ROOT` を忘れずに修正する。
