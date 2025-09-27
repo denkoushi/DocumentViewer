@@ -13,6 +13,7 @@
 
   let errorTimeoutId = null;
   let countdownIntervalId = null;
+  const isEmbedded = window.self !== window.top;
 
   const setState = (state) => {
     app.dataset.state = state;
@@ -54,17 +55,25 @@
   };
 
   const ensureFocus = () => {
+    if (isEmbedded) {
+      return;
+    }
+
     if (document.activeElement !== barcodeInput) {
       barcodeInput.focus();
     }
   };
 
   window.addEventListener('load', () => {
-    ensureFocus();
+    if (!isEmbedded) {
+      ensureFocus();
+    }
     setState('idle');
   });
 
-  setInterval(ensureFocus, 1500);
+  if (!isEmbedded) {
+    setInterval(ensureFocus, 1500);
+  }
 
   const lookupDocument = async (partNumber) => {
     const trimmed = partNumber.trim();
