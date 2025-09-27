@@ -12,6 +12,7 @@ FAILED_DIR="${FAILED_DIR:-${STAGING_DIR}/failed}"
 LOCAL_META="${LOCAL_META:-${DEST_DIR}/meta.json}"
 USB_SUBDIR="${USB_SUBDIR:-docviewer}"
 VIEWER_SERVICE="${VIEWER_SERVICE:-docviewer.service}"
+TMP_DIR=""
 
 log() {
   local timestamp message
@@ -149,9 +150,8 @@ main() {
 
   log "INFO found ${#pdfs[@]} pdf file(s) in $usb_dir"
 
-  local tmp_dir
-  tmp_dir="$(mktemp -d "$STAGING_DIR/import.XXXXXX")"
-  trap 'rm -rf "$tmp_dir"' EXIT
+  TMP_DIR="$(mktemp -d "$STAGING_DIR/import.XXXXXX")"
+  trap 'if [[ -n ${TMP_DIR:-} && -d ${TMP_DIR:-} ]]; then rm -rf "$TMP_DIR"; fi' EXIT
 
   local success=0
   local failure=0
@@ -159,7 +159,7 @@ main() {
   for src in "${pdfs[@]}"; do
     local base
     base="$(basename "$src")"
-    local staged="$tmp_dir/$base"
+    local staged="$TMP_DIR/$base"
 
     if cp -f "$src" "$staged"; then
       if install -m 0644 "$staged" "$DEST_DIR/$base"; then
