@@ -36,5 +36,6 @@ mount "$DEVICE" "$MOUNT_POINT"
 
 USB_SUBDIR="docviewer" IMPORT_LOG="${IMPORT_LOG:-/var/log/document-viewer/import.log}" \
   "$IMPORTER" "$MOUNT_POINT"
-
-log "USB import completed"
+rc=$?
+log "USB import completed (exit=$rc)"
+exit $rc
