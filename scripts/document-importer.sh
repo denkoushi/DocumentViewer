@@ -150,7 +150,7 @@ main() {
 
   log "INFO found ${#pdfs[@]} pdf file(s) in $usb_dir"
 
-  TMP_DIR="$(mktemp -d "$STAGING_DIR/import.XXXXXX")"
+  TMP_DIR="$(mktemp -d "${STAGING_DIR}/import.XXXXXX")"
   trap 'if [[ -n ${TMP_DIR:-} && -d ${TMP_DIR:-} ]]; then rm -rf "$TMP_DIR"; fi' EXIT
 
   local success=0
