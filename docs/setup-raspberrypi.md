@@ -125,3 +125,20 @@ sudo bash scripts/usb-import.sh /dev/sda1
 - 取り込み後は `~/DocumentViewer/documents/meta.json` に最新タイムスタンプが記録され、ブラウザを更新すると PDF が表示される。
 
 > 今後 systemd 常駐化する場合は、上記スクリプトをラップする Unit を作成し、tools01 ユーザーが `/media` を監視する構成へ更新する。
+
+## DocumentViewer を常駐サービス化する
+工場現場では電源投入のみで利用できることが求められます。以下のスクリプトで DocumentViewer を systemd サービスとして登録すると、ラズパイ起動時に自動で Viewer が開始されます。
+
+```bash
+cd ~/DocumentViewer
+sudo DOCUMENT_VIEWER_USER=tools01 ./scripts/install_docviewer_service.sh
+```
+
+- `DOCUMENT_VIEWER_USER` を省略すると `tools01` が利用されます。別ユーザーの場合は環境に合わせて指定してください。
+- スクリプトが `/etc/systemd/system/docviewer.service` を作成し、`systemctl enable --now docviewer.service` まで実行します。
+- サービス設定では `~/DocumentViewer/venv/bin/python ~/DocumentViewer/app/viewer.py` を常時起動します。仮想環境が無い場合は先に `python3 -m venv venv` などで作成してください。
+- 状態確認: `sudo systemctl status docviewer.service`
+- ログ確認: `sudo journalctl -u docviewer.service -n 50`
+- 停止/再起動: `sudo systemctl stop docviewer.service` / `sudo systemctl restart docviewer.service`
+
+> 既に手動で `python app/viewer.py` を動かしている場合は、サービス導入後にそのプロセスを停止してください。

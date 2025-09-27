@@ -94,6 +94,7 @@
 ## インポートツール設計
 - 目的: USB メモリ内の `*.pdf` を `/home/pi/document-viewer/documents/` に上書きコピーし、完了後にビューワへ反映させる。
 - 自動マウント想定: Raspberry Pi OS 標準の `pcmanfm` 自動マウントを利用。USB を挿入すると `/media/pi/<ボリューム名>/` にマウントされる前提で処理する。
+- Viewer 本体は systemd サービス（`docviewer.service`）で常駐させ、電源投入で自動起動できるようにする。
 - 実装構成
   - `document-importer.service`: systemd サービス。`inotifywait` で `/media/pi/` 以下のマウントイベントを監視し、USB 挿入時にスクリプトを起動。
   - `document-importer.sh`: 実際のコピー処理を行うシェルスクリプト。
@@ -195,4 +196,3 @@
   3. `FLASK_APP=viewer.py FLASK_ENV=development flask run --host 0.0.0.0 --port 5000` (カレントディレクトリを `app/` に設定)
   4. ブラウザで `http://raspberrypi.local:5000` (例) を開く。
 - 本番運用時は `gunicorn` + `systemd` や `flask run --no-debugger` を kiosk 起動スクリプトから呼び出す想定。Chromium を kiosk モードで起動し、`http://localhost:5000` を表示させる。
-
