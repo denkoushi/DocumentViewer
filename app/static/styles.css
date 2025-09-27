@@ -163,28 +163,43 @@ button:active {
   align-items: center;
   padding: 4px 0 8px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.35);
-}
-
-.viewer-meta-bar h2 {
-  margin: 0;
-  font-size: 1rem;
-  letter-spacing: 0.05em;
   color: #f8fafc;
 }
 
+.viewer-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.viewer-meta__part {
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+}
+
 .viewer-meta__filename {
-  margin: 2px 0 0;
   color: #94a3b8;
   font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
 }
 
 .viewer-actions {
   display: flex;
 }
 
-.viewer-actions .secondary {
-  padding: 6px 12px;
-  font-size: 0.85rem;
+.viewer-actions .chip {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  color: #f8fafc;
+  border: none;
+  letter-spacing: 0.04em;
 }
 
 .viewer-document {
