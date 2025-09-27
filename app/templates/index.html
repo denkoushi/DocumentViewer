@@ -8,10 +8,9 @@
   <script defer src="{{ url_for('static', filename='app.js') }}"></script>
 </head>
 <body>
-  <header class="app-header">
-    <h1>Document Viewer</h1>
-    <div class="status" id="status-indicator">待機中</div>
-  </header>
+  <div class="status-bar">
+    <span class="status" id="status-indicator">待機中</span>
+  </div>
   <main class="app" id="app" data-state="idle">
     <section class="screen" data-screen="idle">
       <div class="screen__content">
@@ -42,12 +41,6 @@
             <iframe id="pdf-frame" title="PDF Viewer" allow="clipboard-write"></iframe>
           </div>
         </div>
-        <aside class="viewer-side">
-          <div class="viewer-side__content">
-            <h3>追加情報</h3>
-            <p class="viewer-side__placeholder">ここに工程メモや安全注意などを表示できます。</p>
-          </div>
-        </aside>
       </div>
     </section>
 
