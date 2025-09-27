@@ -208,3 +208,6 @@ main() {
 }
 
 main "$@"
+rc=$?
+log "INFO importer finished with code $rc"
+exit "$rc"
