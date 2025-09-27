@@ -187,10 +187,10 @@ main() {
 
   if command -v systemctl >/dev/null 2>&1; then
     if systemctl cat "$VIEWER_SERVICE" >/dev/null 2>&1; then
-      if systemctl restart "$VIEWER_SERVICE"; then
-        log "INFO restarted $VIEWER_SERVICE"
+      if ! systemctl restart "$VIEWER_SERVICE"; then
+        log "WARN failed to restart $VIEWER_SERVICE (手動起動中かもしれません)"
       else
-        log "ERROR failed to restart $VIEWER_SERVICE"
+        log "INFO restarted $VIEWER_SERVICE"
       fi
     else
       log "WARN viewer service '$VIEWER_SERVICE' not found"
