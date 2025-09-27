@@ -204,6 +204,7 @@ main() {
   write_timestamp "$LOCAL_META" "$new_ts"
 
   log "INFO import complete; it is now safe to remove the USB drive"
+  return 0
 }
 
 main "$@"
