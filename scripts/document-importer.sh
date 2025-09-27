@@ -186,7 +186,7 @@ main() {
   fi
 
   if command -v systemctl >/dev/null 2>&1; then
-    if systemctl list-units --full --all | grep -Fq "$VIEWER_SERVICE"; then
+    if systemctl cat "$VIEWER_SERVICE" >/dev/null 2>&1; then
       if systemctl restart "$VIEWER_SERVICE"; then
         log "INFO restarted $VIEWER_SERVICE"
       else
