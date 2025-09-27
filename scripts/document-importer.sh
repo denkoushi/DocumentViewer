@@ -207,7 +207,9 @@ main() {
   return 0
 }
 
+set +e
 main "$@"
 rc=$?
+set -e
 log "INFO importer finished with code $rc"
 exit "$rc"
