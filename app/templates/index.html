@@ -8,9 +8,6 @@
   <script defer src="{{ url_for('static', filename='app.js') }}"></script>
 </head>
 <body>
-  <div class="status-bar">
-    <span class="status" id="status-indicator">待機中</span>
-  </div>
   <main class="app" id="app" data-state="idle">
     <section class="screen" data-screen="idle">
       <div class="screen__content">
@@ -34,6 +31,7 @@
               <span id="viewer-filename" class="viewer-meta__filename"></span>
             </div>
             <div class="viewer-actions">
+              <span class="status chip" id="status-indicator">待機中</span>
               <button type="button" id="return-to-idle" class="chip">待機画面に戻る</button>
             </div>
           </div>

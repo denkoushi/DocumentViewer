@@ -190,13 +190,15 @@ button:active {
 
 .viewer-actions {
   display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .viewer-actions .chip {
   padding: 4px 12px;
   font-size: 0.8rem;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(148, 163, 184, 0.35);
   color: #f8fafc;
   border: none;
   letter-spacing: 0.04em;
