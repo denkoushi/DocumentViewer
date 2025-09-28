@@ -31,6 +31,27 @@ body {
   background: rgba(148, 163, 184, 0.25);
   color: #f8fafc;
   letter-spacing: 0.03em;
+  transition: background .2s ease, color .2s ease;
+}
+
+.status[data-state="idle"] {
+  background: rgba(56, 189, 248, 0.25);
+  color: #bae6fd;
+}
+
+.status[data-state="viewer"] {
+  background: rgba(16, 185, 129, 0.28);
+  color: #bbf7d0;
+}
+
+.status[data-state="searching"] {
+  background: rgba(250, 204, 21, 0.28);
+  color: #fef08a;
+}
+
+.status[data-state="error"] {
+  background: rgba(248, 113, 113, 0.28);
+  color: #fecaca;
 }
 
 .app {
@@ -88,12 +109,26 @@ body {
   border-radius: 8px;
   color: #94a3b8;
   background: rgba(148, 163, 184, 0.12);
+  transition: border-color .25s ease, box-shadow .25s ease, color .25s ease, background .25s ease;
 }
 
 #barcode-input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
+}
+
+.app.scan-ready .barcode-input {
+  border-color: rgba(56, 189, 248, 0.8);
+  background: rgba(56, 189, 248, 0.12);
+  color: #e0f2fe;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.18);
+  animation: scanHighlight 1.6s ease-in-out infinite;
+}
+
+@keyframes scanHighlight {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.16); }
+  50%      { box-shadow: 0 0 0 8px rgba(56, 189, 248, 0.05); }
 }
 
 .screen__footer {

@@ -32,6 +32,7 @@
 
   const setState = (state) => {
     app.dataset.state = state;
+    app.classList.toggle('scan-ready', state === 'idle');
     switch (state) {
       case 'idle':
         statusIndicator.textContent = '待機中';
@@ -56,6 +57,7 @@
       default:
         statusIndicator.textContent = '';
     }
+    statusIndicator.dataset.state = state;
     ensureFocus();
     notifyParent(state);
   };
