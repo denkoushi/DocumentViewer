@@ -43,6 +43,7 @@
         currentPartNumber = '';
         currentFilename = '';
         clearTimers();
+        focusInput();
         break;
       case 'viewer':
         statusIndicator.textContent = '表示中';
@@ -53,6 +54,7 @@
         break;
       case 'searching':
         statusIndicator.textContent = '検索中…';
+        focusInput();
         break;
       default:
         statusIndicator.textContent = '';
@@ -74,19 +76,26 @@
     errorTimer.textContent = '';
   };
 
-  const ensureFocus = () => {
-    if (isEmbedded) {
-      return;
-    }
-
-    if (document.activeElement !== barcodeInput) {
+  const focusInput = () => {
+    if (!barcodeInput) return;
+    try {
+      barcodeInput.focus({ preventScroll: true });
+    } catch (_) {
       barcodeInput.focus();
+    }
+  };
+
+  const ensureFocus = () => {
+    if (document.activeElement !== barcodeInput) {
+      focusInput();
     }
   };
 
   window.addEventListener('load', () => {
     if (!isEmbedded) {
       ensureFocus();
+    } else {
+      focusInput();
     }
     setState('idle');
   });
@@ -189,6 +198,10 @@
   window.addEventListener('message', (event) => {
     const data = event.data;
     if (!data || typeof data !== 'object') return;
+    if (data.type === 'focus-request') {
+      focusInput();
+      return;
+    }
     if (data.type === 'viewer-return') {
       setState('idle');
     }
