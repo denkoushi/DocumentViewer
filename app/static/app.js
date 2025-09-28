@@ -14,6 +14,21 @@
   let errorTimeoutId = null;
   let countdownIntervalId = null;
   const isEmbedded = window.self !== window.top;
+  let currentPartNumber = '';
+  let currentFilename = '';
+
+  const notifyParent = (state) => {
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({
+          type: 'viewer-state',
+          state,
+          part: currentPartNumber,
+          filename: currentFilename
+        }, '*');
+      } catch (_) {}
+    }
+  };
 
   const setState = (state) => {
     app.dataset.state = state;
@@ -22,8 +37,10 @@
         statusIndicator.textContent = '待機中';
         barcodeInput.value = '';
         pdfFrame.src = '';
-        viewerPartNumber.textContent = '部品番号';
+        viewerPartNumber.textContent = '';
         viewerFilename.textContent = '';
+        currentPartNumber = '';
+        currentFilename = '';
         clearTimers();
         break;
       case 'viewer':
@@ -40,6 +57,7 @@
         statusIndicator.textContent = '';
     }
     ensureFocus();
+    notifyParent(state);
   };
 
   const clearTimers = () => {
@@ -94,7 +112,9 @@
       }
 
       const data = await response.json();
-      viewerPartNumber.textContent = `部品番号: ${trimmed}`;
+      currentPartNumber = trimmed;
+      currentFilename = data.filename;
+      viewerPartNumber.textContent = trimmed;
       viewerFilename.textContent = data.filename;
       pdfFrame.src = `${data.url}#toolbar=1&navpanes=0`;
       setState('viewer');
@@ -162,5 +182,13 @@
 
   window.addEventListener('click', () => {
     ensureFocus();
+  });
+
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.type === 'viewer-return') {
+      setState('idle');
+    }
   });
 })();
