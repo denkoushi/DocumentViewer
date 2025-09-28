@@ -22,6 +22,121 @@ log() {
   printf '%s %s\n' "$timestamp" "$message" | tee -a "$LOG_FILE"
 }
 
+validate_file_mime() {
+  local path="$1"
+  local expected="$2"
+  local base
+  local ext
+  local mime
+  local allowed=0
+
+  base="$(basename "$path")"
+  ext="${base##*.}"
+
+  case "$expected" in
+    pdf)
+      if [[ "${ext,,}" != "pdf" ]]; then
+        log "WARN unexpected extension for $base (expected .pdf)"
+        return 1
+      fi
+      ;;
+    json)
+      if [[ "${ext,,}" != "json" ]]; then
+        log "WARN unexpected extension for $base (expected .json)"
+        return 1
+      fi
+      ;;
+    *)
+      log "WARN unknown validation type '$expected' for $base"
+      return 1
+      ;;
+  esac
+
+  if ! command -v file >/dev/null 2>&1; then
+    log "ERROR 'file' command not available; cannot validate MIME"
+    return 1
+  fi
+
+  mime="$(file --brief --mime-type "$path" 2>/dev/null || echo 'unknown')"
+
+  case "$expected" in
+    pdf)
+      case "$mime" in
+        application/pdf|application/x-pdf)
+          allowed=1
+          ;;
+      esac
+      ;;
+    json)
+      case "$mime" in
+        application/json|text/plain|inode/x-empty)
+          allowed=1
+          ;;
+      esac
+      ;;
+  esac
+
+  if (( allowed == 0 )); then
+    log "WARN MIME type '$mime' for $base is not permitted"
+    return 1
+  fi
+
+  return 0
+}
+
+validate_usb_payload() {
+  local usb_dir="$1"
+  local blocked=0
+  local path base
+
+  if [[ ! -d "$usb_dir" ]]; then
+    log "ERROR USB directory '$usb_dir' does not exist"
+    return 1
+  fi
+
+  if ! command -v file >/dev/null 2>&1; then
+    log "ERROR 'file' command not available; cannot validate USB payload"
+    return 1
+  fi
+
+  shopt -s nullglob dotglob
+  local entries=("$usb_dir"/*)
+  shopt -u dotglob
+
+  for path in "${entries[@]}"; do
+    [[ -e "$path" ]] || continue
+    base="$(basename "$path")"
+
+    if [[ -d "$path" ]]; then
+      log "WARN directory '$base' is not allowed in $USB_SUBDIR"
+      blocked=1
+      continue
+    fi
+
+    if [[ "${base,,}" == "meta.json" ]]; then
+      validate_file_mime "$path" json || blocked=1
+      continue
+    fi
+
+    if [[ "${base,,}" == *.pdf ]]; then
+      validate_file_mime "$path" pdf || blocked=1
+      continue
+    fi
+
+    log "WARN unexpected file '$base' detected in $USB_SUBDIR"
+    blocked=1
+  done
+
+  shopt -u nullglob
+
+  if (( blocked != 0 )); then
+    return 1
+  fi
+
+  log "INFO USB payload validation passed"
+  return 0
+}
+
 usage() {
   cat <<USAGE
 Usage: $0 <mount-point>
@@ -109,6 +224,11 @@ main() {
   if [[ ! -d "$usb_dir" ]]; then
     log "ERROR USB directory '$usb_dir' does not exist"
     return 0
+  fi
+
+  if ! validate_usb_payload "$usb_dir"; then
+    log "ERROR USB payload validation failed; aborting import"
+    return 2
   fi
 
   mkdir -p "$STAGING_DIR" "$FAILED_DIR"
