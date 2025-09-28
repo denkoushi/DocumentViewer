@@ -122,6 +122,7 @@ sudo bash scripts/usb-import.sh /dev/sda1
 
 - コピー結果は `/var/log/document-viewer/import.log` に追記される。
 - `docviewer/` 配下は PDF と `meta.json` のみ受け付ける。許可外ファイルや MIME タイプの不一致を検出すると取り込みを中断し、ログへ警告を残す。
+  - 警告が出た場合は `tail -n 20 /var/log/document-viewer/import.log` を確認し、記録されたファイルを USB から削除または正しい形式に修正してから再度挿し直す。
 - `docviewer/meta.json` の `updated_at` がローカルより新しいときのみ取り込みを行う。初回はファイルがなくても自動作成される。
 - 取り込み後は `~/DocumentViewer/documents/meta.json` に最新タイムスタンプが記録され、ブラウザを更新すると PDF が表示される。
 
