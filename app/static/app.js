@@ -129,6 +129,12 @@
       viewerFilename.textContent = data.filename;
       pdfFrame.src = `${data.url}#toolbar=1&navpanes=0`;
       setState('viewer');
+      notifyParent('viewer');
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage({ type: 'dv-barcode', part: trimmed, order: data.order || '' }, '*');
+        } catch (_) {}
+      }
     } catch (error) {
       console.error(error);
       displayError(trimmed, error.message || '該当資料が見つかりません');
