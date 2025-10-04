@@ -110,6 +110,12 @@
       return;
     }
 
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({ type: 'dv-barcode', part: trimmed, order: '' }, '*');
+      } catch (_) {}
+    }
+
     setState('searching');
 
     try {
