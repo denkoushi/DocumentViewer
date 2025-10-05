@@ -1,6 +1,6 @@
 # Raspberry Pi Setup Guide
 
-このドキュメントでは、Raspberry Pi 上で Document Viewer を自動起動し、PDF を閲覧できるようにするまでの手順をまとめる。
+このドキュメントでは、Raspberry Pi 上で Document Viewer を自動起動し、PDF を閲覧できるようにするまでの手順をまとめる。ドキュメント種別ごとの役割については `docs/documentation-guidelines.md` を参照してください。
 
 ## 1. OS 更新
 ```bash
