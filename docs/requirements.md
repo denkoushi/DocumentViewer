@@ -156,23 +156,12 @@
   4. ビューワ内で右クリックメニューや不要なUI要素が出ないよう Chromium kiosk モードを利用。
 
 
-## インポートツール試作スクリプト
-- `scripts/document-importer.sh`: 単発実行で USB マウントポイントを引数に取り、PDF コピー／ログ出力／ビューワ再起動まで行うシェルスクリプト。
-  - 依存コマンド: `mountpoint`, `install`, `systemctl` (任意)。
-  - 導入手順例:
-    1. `sudo install -m 755 scripts/document-importer.sh /usr/local/bin/document-importer.sh`
-    2. `/home/pi/document-viewer/documents` と `/home/pi/document-viewer/imports` を作成。
-    3. `sudo chown -R pi:pi /home/pi/document-viewer` (必要に応じて修正)。
-- `scripts/document-importer-daemon.sh`: `/media/pi` を inotify 監視し、USB 追加時に `document-importer.sh` を呼び出すデーモンスクリプト。
-  - 依存コマンド: `inotifywait` (inotify-tools パッケージ), `mountpoint`。
-  - 導入手順例:
-    1. `sudo apt install inotify-tools`
-    2. `sudo install -m 755 scripts/document-importer-daemon.sh /usr/local/bin/document-importer-daemon.sh`
-    3. `sudo install -m 755 scripts/document-importer.sh /usr/local/bin/document-importer.sh`
-    4. `sudo install -m 644 systemd/document-importer.service /etc/systemd/system/document-importer.service`
-    5. `sudo systemctl daemon-reload`
-    6. `sudo systemctl enable --now document-importer.service`
-    7. `journalctl -u document-importer.service -f` で動作ログを確認。
+## インポートツールの要件
+- USB から PDF を取り込み、最新データのみ `/home/pi/document-viewer/documents/` に反映すること。
+- `document-importer.sh` はマウントポイントを引数に受け取り、検証・コピー・ログ出力までを自動化する。
+- `document-importer.service` (systemd) は inotify で `/media/pi/` を監視し、USB 挿入時に importer を呼び出す。
+- 取り込みの結果とエラーは `/var/log/document-viewer/import.log` に記録する。
+- 手動実行や導入手順などの具体的な操作は `docs/setup-raspberrypi.md` を参照。
 
 ## UI プロトタイプ
 - `ui/prototype.html` に待機・表示・エラーの3画面を並べたスタティックモックを作成。
@@ -182,17 +171,10 @@
 
 
 ## ビューワ実装メモ
-- Flask ベースのシンプルな Web アプリ (`app/viewer.py`) を追加。
-  - `/` でフロントエンド (待機 / 表示 / エラーの 3 画面) を提供。
-  - `/api/documents/<部品番号>` で `documents/<部品番号>.pdf` を探索し、存在すれば URL を返却。
-  - `/documents/<ファイル名>` で PDF を配信。ファイル名の大小文字を吸収するために stem 比較を実施。
-- フロントエンド (`app/static/app.js`, `app/static/styles.css`, `app/templates/index.html`)
-  - バーコードリーダ入力を常時フォーカスした不可視テキストボックスで受け付け、Enter で検索 API を呼び出す。
-  - PDF は iframe 埋め込みで表示し、Chromium の標準ツールバーを利用してマウス操作によるページ送りを実現。
-  - 該当 PDF が無い場合は 5 秒間のカウントダウン後に自動で待機画面へ戻す。
-- 実行方法 (開発時)
-  1. `python3 -m venv .venv && source .venv/bin/activate`
-  2. `pip install -r app/requirements.txt`
-  3. `FLASK_APP=viewer.py FLASK_ENV=development flask run --host 0.0.0.0 --port 5000` (カレントディレクトリを `app/` に設定)
-  4. ブラウザで `http://raspberrypi.local:5000` (例) を開く。
-- 本番運用時は `gunicorn` + `systemd` や `flask run --no-debugger` を kiosk 起動スクリプトから呼び出す想定。Chromium を kiosk モードで起動し、`http://localhost:5000` を表示させる。
+- Flask (`app/viewer.py`) が `/` で UI、`/api/documents/<部品番号>` で PDF の存在を返す API を提供する。
+- フロントエンド (`app/static/app.js`) はバーコード入力を常時フォーカスし、PDF を iframe 表示する。
+- 自動復帰や kiosk モードでの起動を前提とし、詳細な起動・運用手順は `docs/setup-raspberrypi.md` を参照。
+
+## 関連ドキュメント
+- Raspberry Pi へのセットアップと運用手順: `docs/setup-raspberrypi.md`
+- ドキュメント運用ルール: `docs/documentation-guidelines.md`
