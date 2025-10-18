@@ -10,6 +10,7 @@ DocumentViewer リポジトリのドキュメント役割と記述ルールを�
 | `docs/setup-raspberrypi.md` | システム管理者 | Raspberry Pi へのセットアップ手順、運用時の更新方法や importer 導入手順。
 | `docs/requirements.md` | プロダクトオーナー / 開発者 | 機能要件、非機能要件、優先度、決定事項。実装や運用の詳細は他ドキュメントへリンクする。
 | `docs/documentation-guidelines.md` | 全員 | 本ガイドライン。更新時の参照先。
+| `docs/AGENTS.md` | エージェント / 自動化タスク | 作業開始前のチェックリスト、コミュニケーション指針。
 | その他 (`scripts/`, `systemd/` など) | 開発者 | 実装やスクリプトの配置。コードに関する説明は README や各ドキュメントから参照する。
 
 ## 2. 記述ルール
