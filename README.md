@@ -6,6 +6,7 @@ Raspberry Pi 上で部品ごとの PDF 手順書を表示するためのビュ�
 - Raspberry Pi への導入手順: `docs/setup-raspberrypi.md`
 - 機能要件・ロードマップ: `docs/requirements.md`
 - ドキュメント運用ルール: `docs/documentation-guidelines.md`
+- エージェント向け指針: `docs/AGENTS.md`
 
 ## リポジトリ構成
 ```
