@@ -83,6 +83,13 @@ X-GNOME-Autostart-enabled=true
 2. ログイン完了後、Chromium が kiosk モードで起動し Document Viewer が表示されることを確認。
 3. `documents/<部品番号>.pdf` を更新すると、ブラウザ内で閲覧できる。
 
+## 10. ミラー検証期間中の日次チェック
+- RaspberryPiServer 側の日次チェックリスト（`docs/test-notes/mirror-check-template.md`）に合わせ、DocumentViewer では以下を確認・記録する。
+  - 工具管理 UI と同じオーダーが一覧に反映されていること（必要に応じてスクリーンショットを取得）。
+  - `~/DocumentViewer/documents/` 配下の PDF が最新タイムスタンプに更新されていること。
+  - `journalctl -u docviewer.service -n 50` でエラーがないこと。
+- チェック結果はチェックシートの DocumentViewer 欄へ○/×とメモを記入。異常時は `sudo systemctl restart docviewer.service` などで復旧後、再度確認する。
+
 ## 備考
 - iframe の sandbox 属性を外さないと Chromium が PDF 読み込みをブロックするため、`app/templates/index.html` の iframe は以下のように設定している。
   ```html

@@ -72,6 +72,7 @@
 - PDF 更新履歴: バージョン管理は手動 (Excel 原稿と PDF の履歴は PC 側で管理)。
 - 定期点検: 月次で端末の状態、ストレージ空き容量、USB ポートを点検。
 - 障害対応: 表示できない PDF がある場合は、PC 側原稿の再出力またはファイル破損の確認を実施。
+- ミラー検証期間中は RaspberryPiServer の日次チェックリスト（`docs/test-notes/mirror-check-template.md`）と連携し、DocumentViewer に最新データが反映されていることと `docviewer.service` のログを記録する。
 
 ## 将来課題・拡張余地
 - PDF 以外の軽量フォーマット (HTML/画像) への移行検討。
