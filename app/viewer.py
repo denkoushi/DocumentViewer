@@ -17,6 +17,31 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
 API_BASE = os.getenv("VIEWER_API_BASE", "http://raspi-server.local:8501")
 API_TOKEN = os.getenv("VIEWER_API_TOKEN")
+SOCKET_BASE = os.getenv("VIEWER_SOCKET_BASE", API_BASE)
+SOCKET_PATH = os.getenv("VIEWER_SOCKET_PATH", "/socket.io")
+SOCKET_AUTO_OPEN = os.getenv("VIEWER_SOCKET_AUTO_OPEN", "1").lower() not in {"0", "false", "no"}
+
+
+def _parse_csv_env(name: str) -> list[str]:
+    raw_value = os.getenv(name, "")
+    if not raw_value:
+        return []
+    return [item.strip() for item in raw_value.split(",") if item.strip()]
+
+
+ACCEPT_DEVICE_IDS = _parse_csv_env("VIEWER_ACCEPT_DEVICE_IDS")
+ACCEPT_LOCATION_CODES = _parse_csv_env("VIEWER_ACCEPT_LOCATION_CODES")
+
+
+def _build_socket_script_url() -> str | None:
+    if not SOCKET_BASE:
+        return None
+    base = SOCKET_BASE.rstrip("/")
+    path = SOCKET_PATH.strip() or "/socket.io"
+    if not path.startswith("/"):
+        path = f"/{path}"
+    script_path = f"{path.rstrip('/')}/socket.io.js"
+    return f"{base}{script_path}"
 
 
 def find_document_filename(part_number: str) -> Optional[str]:
@@ -50,6 +75,16 @@ def index():
         "index.html",
         api_base=API_BASE,
         api_token=API_TOKEN,
+        socket_script=_build_socket_script_url(),
+        docviewer_config={
+            "apiBase": API_BASE,
+            "apiToken": API_TOKEN,
+            "socketBase": SOCKET_BASE,
+            "socketPath": SOCKET_PATH,
+            "socketAutoOpen": SOCKET_AUTO_OPEN,
+            "acceptDeviceIds": ACCEPT_DEVICE_IDS,
+            "acceptLocationCodes": ACCEPT_LOCATION_CODES,
+        },
     )
 
 

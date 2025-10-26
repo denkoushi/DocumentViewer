@@ -6,11 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
   <script>
-    window.DOCVIEWER_CONFIG = {{ {"apiBase": api_base, "apiToken": api_token}|tojson }};
+    window.DOCVIEWER_CONFIG = {{ docviewer_config|tojson }};
   </script>
+  {% if socket_script %}
+  <script defer src="{{ socket_script }}"></script>
+  {% endif %}
   <script defer src="{{ url_for('static', filename='app.js') }}"></script>
 </head>
 <body>
+  <header class="status-bar">
+    <span class="socket-status" id="socket-status" data-state="connecting">Socket: 接続準備中…</span>
+  </header>
   <main class="app" id="app" data-state="idle">
     <section class="screen" data-screen="idle">
       <div class="screen__content">

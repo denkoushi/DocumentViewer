@@ -21,7 +21,7 @@ ui/         プロトタイプやスタイル関連のリソース
 - Raspberry Pi 上で常時運用する場合は、`docs/setup-raspberrypi.md` の手順に従って systemd サービス登録と kiosk 起動を設定してください。
 
 ## 連携するシステム
-- **tool-management-system02（Window A）**: 右ペインの所在ビューと連動し、OnSiteLogistics から送られた `part_locations` を Socket.IO 経由で参照します。USB 同期スクリプト（`scripts/usb-import.sh`）は Window A の `usb_master_sync.sh` から呼び出され、要領書 PDF を共通運用します。
+- **tool-management-system02（Window A）**: 右ペインの所在ビューと連動し、OnSiteLogistics から送られた `part_locations` を Socket.IO 経由で参照します。DocumentViewer 自体も RaspberryPiServer の `part_location_updated` / `scan_update` を受信して該当 PDF を自動表示します。USB 同期スクリプト（`scripts/usb-import.sh`）は Window A の `usb_master_sync.sh` から呼び出され、要領書 PDF を共通運用します。
 - **OnSiteLogistics（ハンディリーダ）**: 製造オーダーと棚位置を `feature/scan-intake` API で登録し、DocumentViewer と同じ Raspberry Pi 上の右ペインにリアルタイム反映されます（詳細は Window A の RUNBOOK 3.4 を参照）。
 - **RaspberryPizero2W_withDropbox（Window C）**: 将来的に Window A と協調して所在/作業情報をサイネージへ配信する計画です。Dropbox ベースの JSON を活用する場合は、Window A 側でデータ提供方法を定義してから本ビューアと整合させます。
 

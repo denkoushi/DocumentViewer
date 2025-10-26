@@ -75,11 +75,11 @@
 - ミラー検証期間中は RaspberryPiServer の日次チェックリスト（`docs/test-notes/mirror-check-template.md`）と連携し、DocumentViewer に最新データが反映されていることと `docviewer.service` のログを記録する。
 
 ## 現在の進捗メモ（2025-10-26 時点）
-- RaspberryPiServer への Socket.IO 接続先切り替えはこれから実装する段階。現状は旧サーバー接続が前提のまま。
+- REST / Socket.IO の接続先を RaspberryPiServer へ切り替え、`part_location_updated` / `scan_update` 受信時に DocumentViewer が自動で該当 PDF を開く動作を実装済み（`VIEWER_SOCKET_*` 系環境変数で制御）。
 - USB インポート／サービス化手順は整備済み。今後は新サーバーからの DIST USB を受け取り、日次チェックシートで反映状況を記録する運用を開始する。
 - 次フェーズの開発作業:
-  - Socket.IO 接続先を環境変数化し、新サーバーのエンドポイントへ切り替えられるようコードと設定を改修。
-  - DocumentViewer 右ペインで RaspberryPiServer の所在データを参照する UI 調整を実施。
+  - RaspberryPiServer から受信した所在情報を右ペイン UI（Window A 側）で可視化するための postMessage プロトコル整備。
+  - `VIEWER_ACCEPT_DEVICE_IDS` / `VIEWER_ACCEPT_LOCATION_CODES` を運用手順に組み込み、複数端末設置時の自動開閉ポリシーを定義する。
   - `docviewer.service` のログ出力フォーマットを見直し、14 日検証で必要な情報（更新対象ファイル、同期時刻など）を残す。
 
 ## 将来課題・拡張余地
@@ -88,7 +88,7 @@
 - バーコード以外の検索フォームや履歴表示。
 - 操作ログ収集、閲覧統計の可視化。
 - 多言語対応や音声指示などのアクセシビリティ拡張。
-- Window A（tool-management-system02）および OnSiteLogistics から提供される所在・工程データとのリアルタイム連携（Socket.IO イベントの描画、所在ハイライト、Window C サイネージとのデータ共有）。
+- Window A（tool-management-system02）および OnSiteLogistics から提供される所在・工程データとのリアルタイム連携拡張（現在は PDF 自動表示のみ。所在一覧の描画、ハイライト連携、Window C サイネージへの共有を検討）。
 
 ## オープン課題
 - インポートツールの具体的な実装方式 (GUI/コマンドライン、手動実行か自動検知か)。

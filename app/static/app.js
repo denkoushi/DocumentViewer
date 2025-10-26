@@ -3,6 +3,19 @@
   const apiBaseRaw = typeof config.apiBase === 'string' ? config.apiBase.trim() : '';
   const apiBase = apiBaseRaw.endsWith('/') ? apiBaseRaw.slice(0, -1) : apiBaseRaw;
   const apiToken = typeof config.apiToken === 'string' ? config.apiToken.trim() : '';
+  const socketBaseRaw = typeof config.socketBase === 'string' ? config.socketBase.trim() : '';
+  const socketBase = socketBaseRaw.endsWith('/') ? socketBaseRaw.slice(0, -1) : socketBaseRaw;
+  const rawSocketPath = typeof config.socketPath === 'string' ? config.socketPath.trim() : '';
+  const socketPath = rawSocketPath ? (rawSocketPath.startsWith('/') ? rawSocketPath : `/${rawSocketPath}`) : '/socket.io';
+  const socketAutoOpen = config.socketAutoOpen !== false;
+  const normalizeList = (value) => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item) => item.length > 0);
+  };
+  const acceptDeviceIds = normalizeList(config.acceptDeviceIds);
+  const acceptLocationCodes = normalizeList(config.acceptLocationCodes);
 
   const buildApiUrl = (path) => {
     const normalized = path.startsWith('/') ? path : `/${path}`;
@@ -48,12 +61,16 @@
   const errorResetButton = document.getElementById('error-reset');
   const errorMessage = document.getElementById('error-message');
   const errorTimer = document.getElementById('error-timer');
+  const socketStatus = document.getElementById('socket-status');
 
   let errorTimeoutId = null;
   let countdownIntervalId = null;
   const isEmbedded = window.self !== window.top;
   let currentPartNumber = '';
   let currentFilename = '';
+  let socket = null;
+  let lastSocketPayload = null;
+  let lastSocketKey = null;
 
   const notifyParent = (state) => {
     if (window.parent && window.parent !== window) {
@@ -66,6 +83,32 @@
         }, '*');
       } catch (_) {}
     }
+  };
+
+  const socketLabel = {
+    live: 'Socket: LIVE',
+    connecting: 'Socket: 接続中…',
+    offline: 'Socket: OFFLINE',
+    disabled: 'Socket: 無効',
+    error: 'Socket: エラー',
+  };
+
+  const updateSocketStatus = (state, label) => {
+    if (!socketStatus) return;
+    socketStatus.dataset.state = state;
+    socketStatus.textContent = label || socketLabel[state] || 'Socket: -';
+  };
+
+  const shouldAcceptDevice = (deviceId) => {
+    if (!acceptDeviceIds.length) return true;
+    const value = typeof deviceId === 'string' ? deviceId.trim() : '';
+    return value ? acceptDeviceIds.includes(value) : false;
+  };
+
+  const shouldAcceptLocation = (locationCode) => {
+    if (!acceptLocationCodes.length) return true;
+    const value = typeof locationCode === 'string' ? locationCode.trim() : '';
+    return value ? acceptLocationCodes.includes(value) : false;
   };
 
   const setState = (state) => {
@@ -136,6 +179,7 @@
       focusInput();
     }
     setState('idle');
+    connectSocket();
   });
 
   if (!isEmbedded) {
@@ -184,8 +228,105 @@
       console.error(error);
       displayError(trimmed, error.message || '該当資料が見つかりません');
     } finally {
-      barcodeInput.value = '';
+      if (barcodeInput) {
+        barcodeInput.value = '';
+      }
     }
+  };
+
+  const handleSocketPayload = (payload) => {
+    if (!payload || typeof payload !== 'object') return;
+    lastSocketPayload = payload;
+
+    const part =
+      payload.order_code ||
+      payload.orderCode ||
+      payload.part_number ||
+      payload.partNumber ||
+      '';
+
+    if (!part || typeof part !== 'string') {
+      return;
+    }
+
+    const deviceId = payload.device_id || payload.deviceId || '';
+    const locationCode = payload.location_code || payload.locationCode || '';
+    if (!shouldAcceptDevice(deviceId)) {
+      return;
+    }
+    if (!shouldAcceptLocation(locationCode)) {
+      return;
+    }
+
+    const scanId = payload.scan_id || payload.scanId || '';
+    const updatedAt = payload.updated_at || payload.updatedAt || '';
+    const dedupeKey = scanId || (updatedAt ? `${part}#${updatedAt}` : '');
+    if (dedupeKey && dedupeKey === lastSocketKey) {
+      return;
+    }
+    if (dedupeKey) {
+      lastSocketKey = dedupeKey;
+    }
+
+    if (app.dataset.state === 'viewer' && currentPartNumber === part.trim()) {
+      return;
+    }
+
+    lookupDocument(part);
+  };
+
+  const attachSocketListeners = () => {
+    if (!socket || typeof socket.on !== 'function') {
+      return;
+    }
+    socket.on('connect', () => {
+      updateSocketStatus('live');
+    });
+    socket.on('disconnect', () => {
+      updateSocketStatus('offline');
+    });
+    socket.on('connect_error', (error) => {
+      console.error('Socket connect_error', error);
+      updateSocketStatus('error', socketLabel.error);
+    });
+    socket.on('part_location_updated', handleSocketPayload);
+    socket.on('scan_update', handleSocketPayload);
+    if (socket.io && typeof socket.io.on === 'function') {
+      socket.io.on('reconnect_attempt', () => updateSocketStatus('connecting'));
+      socket.io.on('reconnect', () => updateSocketStatus('live'));
+      socket.io.on('reconnect_error', () => updateSocketStatus('error', socketLabel.error));
+    }
+  };
+
+  const connectSocket = () => {
+    if (!socketAutoOpen) {
+      updateSocketStatus('disabled');
+      return;
+    }
+    if (!socketBase) {
+      updateSocketStatus('disabled', 'Socket: 未設定');
+      return;
+    }
+    if (socket && typeof socket.connect === 'function') {
+      if (!socket.connected) {
+        updateSocketStatus('connecting');
+        socket.connect();
+      }
+      return;
+    }
+    if (typeof window.io !== 'function') {
+      updateSocketStatus('offline', 'Socket: クライアント未ロード');
+      return;
+    }
+    updateSocketStatus('connecting');
+    socket = window.io(socketBase, {
+      path: socketPath,
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 8000,
+    });
+    attachSocketListeners();
   };
 
   const displayError = (partNumber, message) => {
@@ -214,27 +355,35 @@
     }, seconds * 1000);
   };
 
-  barcodeInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      lookupDocument(barcodeInput.value);
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
+  if (barcodeInput) {
+    barcodeInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        lookupDocument(barcodeInput.value);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        setState('idle');
+      }
+    });
+  }
+
+  if (manualOpenButton) {
+    manualOpenButton.addEventListener('click', () => {
+      lookupDocument(barcodeInput ? barcodeInput.value : '');
+    });
+  }
+
+  if (returnButton) {
+    returnButton.addEventListener('click', () => {
       setState('idle');
-    }
-  });
+    });
+  }
 
-  manualOpenButton.addEventListener('click', () => {
-    lookupDocument(barcodeInput.value);
-  });
-
-  returnButton.addEventListener('click', () => {
-    setState('idle');
-  });
-
-  errorResetButton.addEventListener('click', () => {
-    setState('idle');
-  });
+  if (errorResetButton) {
+    errorResetButton.addEventListener('click', () => {
+      setState('idle');
+    });
+  }
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
