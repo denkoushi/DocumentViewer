@@ -143,18 +143,23 @@ sudo bash scripts/usb-import.sh /dev/sda1
   sudo tee /etc/default/docviewer <<'EOF'
   VIEWER_API_BASE=http://raspi-server.local:8501
   VIEWER_API_TOKEN=raspi-token-20251026
-   VIEWER_SOCKET_BASE=http://raspi-server.local:8501
-   VIEWER_SOCKET_PATH=/socket.io
-   VIEWER_SOCKET_AUTO_OPEN=1
-   # 必要なら端末ごとのフィルタを設定（例: HANDHELD-01 のみ受信）
-   # VIEWER_ACCEPT_DEVICE_IDS=HANDHELD-01
-   # VIEWER_ACCEPT_LOCATION_CODES=RACK-A1
+  VIEWER_SOCKET_BASE=http://raspi-server.local:8501
+  VIEWER_SOCKET_PATH=/socket.io
+  VIEWER_SOCKET_AUTO_OPEN=1
+  # ローカル PDF 参照ディレクトリを明示したい場合（省略時は ~/DocumentViewer/documents）
+  # VIEWER_LOCAL_DOCS_DIR=/srv/documentviewer/documents
+  # アクセスログをファイルへ出力する場合（省略時はログ未出力）
+  # VIEWER_LOG_PATH=/var/log/document-viewer/client.log
+  # 必要なら端末ごとのフィルタを設定（例: HANDHELD-01 のみ受信）
+  # VIEWER_ACCEPT_DEVICE_IDS=HANDHELD-01
+  # VIEWER_ACCEPT_LOCATION_CODES=RACK-A1
   EOF
   sudo systemctl restart docviewer.service
   ```
 - `VIEWER_API_TOKEN` が不要な場合は行を削除してください。既存の `.service` テンプレートで `EnvironmentFile=-/etc/default/docviewer` を読み込むため、ファイルがない場合でもエラーになりません。
 - `VIEWER_SOCKET_BASE` を省略すると `VIEWER_API_BASE` が利用されます。`VIEWER_SOCKET_AUTO_OPEN=0` を指定すると Socket.IO 接続を無効化できます。
 - `VIEWER_ACCEPT_DEVICE_IDS` / `VIEWER_ACCEPT_LOCATION_CODES` はカンマ区切りで複数指定可能です。指定がある場合は一致したイベントのみで自動表示が発火します。
+- `VIEWER_LOG_PATH` を設定するとドキュメント検索や表示リクエストがローテーション付きで記録されます。ログが生成されない場合はディレクトリのパーミッションとパスを確認してください。
 工場現場では電源投入のみで利用できることが求められます。以下のスクリプトで DocumentViewer を systemd サービスとして登録すると、ラズパイ起動時に自動で Viewer が開始されます。
 
 ```bash

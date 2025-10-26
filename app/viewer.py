@@ -1,15 +1,34 @@
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional
 
-from flask import Flask, abort, jsonify, render_template, send_from_directory, url_for
+from flask import (
+    Flask,
+    abort,
+    current_app,
+    jsonify,
+    render_template,
+    send_from_directory,
+    url_for,
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DOCUMENTS_DIR = BASE_DIR / "documents"
-DOCUMENTS_DIR.mkdir(exist_ok=True)
+
+
+def _resolve_documents_dir() -> Path:
+    override = os.getenv("VIEWER_LOCAL_DOCS_DIR", "").strip()
+    if override:
+        return Path(override).expanduser().resolve()
+    return (BASE_DIR / "documents").resolve()
+
+
+DOCUMENTS_DIR = _resolve_documents_dir()
+DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -20,6 +39,8 @@ API_TOKEN = os.getenv("VIEWER_API_TOKEN")
 SOCKET_BASE = os.getenv("VIEWER_SOCKET_BASE", API_BASE)
 SOCKET_PATH = os.getenv("VIEWER_SOCKET_PATH", "/socket.io")
 SOCKET_AUTO_OPEN = os.getenv("VIEWER_SOCKET_AUTO_OPEN", "1").lower() not in {"0", "false", "no"}
+LOG_PATH_RAW = os.getenv("VIEWER_LOG_PATH", "").strip()
+LOG_PATH = Path(LOG_PATH_RAW).expanduser().resolve() if LOG_PATH_RAW else None
 
 
 def _parse_csv_env(name: str) -> list[str]:
@@ -50,15 +71,54 @@ def find_document_filename(part_number: str) -> Optional[str]:
     if not normalized:
         return None
 
-    candidate = DOCUMENTS_DIR / f"{normalized}.pdf"
-    if candidate.exists():
-        return candidate.name
-
     lower = normalized.lower()
     for pdf_path in DOCUMENTS_DIR.glob("*.pdf"):
         if pdf_path.stem.lower() == lower:
             return pdf_path.name
+
+    candidate = DOCUMENTS_DIR / f"{normalized}.pdf"
+    if candidate.exists():
+        return candidate.name
     return None
+
+
+def _configure_logger() -> logging.Logger:
+    logger = logging.getLogger("document_viewer")
+    logger.setLevel(logging.INFO)
+    for handler in list(logger.handlers):
+        if getattr(handler, "_document_viewer_handler", False):
+            logger.removeHandler(handler)
+            try:
+                handler.close()
+            except Exception:  # pylint: disable=broad-except
+                pass
+
+    if LOG_PATH is None:
+        return logger
+
+    try:
+        LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return logger
+
+    handler = RotatingFileHandler(LOG_PATH, maxBytes=3 * 1024 * 1024, backupCount=3)
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    handler._document_viewer_handler = True  # type: ignore[attr-defined]
+    logger.addHandler(handler)
+    return logger
+
+
+LOGGER = _configure_logger()
+
+
+def _log_info(message: str, *args) -> None:
+    LOGGER.info(message, *args)
+    current_app.logger.info(message, *args)
+
+
+def _log_warning(message: str, *args) -> None:
+    LOGGER.warning(message, *args)
+    current_app.logger.warning(message, *args)
 
 
 @app.after_request
@@ -97,7 +157,9 @@ def health():
 def serve_document(filename: str):
     safe_path = DOCUMENTS_DIR / filename
     if not safe_path.exists() or not safe_path.is_file():
+        _log_warning("Invalid document access attempt: %s", filename)
         abort(404)
+    _log_info("Document served: %s", filename)
     return send_from_directory(DOCUMENTS_DIR, filename, mimetype="application/pdf")
 
 
@@ -105,12 +167,14 @@ def serve_document(filename: str):
 def api_get_document(part_number: str):
     filename = find_document_filename(part_number)
     if not filename:
+        _log_info("Document not found: %s", part_number)
         return jsonify({"found": False, "message": "document not found"}), 404
 
     document_url = url_for("serve_document", filename=filename)
     # Append a timestamp to avoid aggressive kiosk caching
     cache_bust = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     document_url_with_cache = f"{document_url}?v={cache_bust}"
+    _log_info("Document lookup success: %s -> %s", part_number, filename)
     return jsonify({
         "found": True,
         "partNumber": part_number,
