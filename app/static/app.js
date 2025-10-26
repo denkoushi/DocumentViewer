@@ -1,4 +1,42 @@
 (() => {
+  const config = window.DOCVIEWER_CONFIG || {};
+  const apiBaseRaw = typeof config.apiBase === 'string' ? config.apiBase.trim() : '';
+  const apiBase = apiBaseRaw.endsWith('/') ? apiBaseRaw.slice(0, -1) : apiBaseRaw;
+  const apiToken = typeof config.apiToken === 'string' ? config.apiToken.trim() : '';
+
+  const buildApiUrl = (path) => {
+    const normalized = path.startsWith('/') ? path : `/${path}`;
+    if (!apiBase) {
+      return normalized;
+    }
+    return `${apiBase}${normalized}`;
+  };
+
+  const buildHeaders = () => {
+    const headers = {
+      Accept: 'application/json',
+    };
+    if (apiToken) {
+      headers.Authorization = `Bearer ${apiToken}`;
+    }
+    return headers;
+  };
+
+  const resolveDocumentUrl = (url) => {
+    if (!url) {
+      return '';
+    }
+    const absolutePattern = /^(?:[a-z]+:)?\/\//i;
+    if (absolutePattern.test(url)) {
+      return url;
+    }
+    if (!apiBase) {
+      return url;
+    }
+    const normalized = url.startsWith('/') ? url : `/${url}`;
+    return `${apiBase}${normalized}`;
+  };
+
   const app = document.getElementById('app');
   const barcodeInput = document.getElementById('barcode-input');
   const manualOpenButton = document.getElementById('manual-open');
@@ -119,8 +157,8 @@
     setState('searching');
 
     try {
-      const response = await fetch(`/api/documents/${encodeURIComponent(trimmed)}`, {
-        headers: { Accept: 'application/json' },
+      const response = await fetch(buildApiUrl(`/api/documents/${encodeURIComponent(trimmed)}`), {
+        headers: buildHeaders(),
       });
 
       if (!response.ok) {
@@ -133,7 +171,8 @@
       currentFilename = data.filename;
       viewerPartNumber.textContent = trimmed;
       viewerFilename.textContent = data.filename;
-      pdfFrame.src = `${data.url}#toolbar=1&navpanes=0`;
+      const documentUrl = resolveDocumentUrl(data.url);
+      pdfFrame.src = documentUrl ? `${documentUrl}#toolbar=1&navpanes=0` : '';
       setState('viewer');
       notifyParent('viewer');
       if (window.parent && window.parent !== window) {
