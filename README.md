@@ -17,6 +17,7 @@ app/        Flask ベースのビューア本体
 scripts/    USB 取り込み等の補助スクリプト
 systemd/    常駐化用ユニットファイル（例）
 ui/         プロトタイプやスタイル関連のリソース
+docs/test-notes/ 実機検証ログ・チェックリスト
 ```
 
 ## 開発メモ
@@ -25,6 +26,9 @@ ui/         プロトタイプやスタイル関連のリソース
 - `VIEWER_API_BASE` / `VIEWER_SOCKET_BASE` などの環境変数で RaspberryPiServer 連携先を切り替えられます（下表参照）。
 - `VIEWER_LOCAL_DOCS_DIR` を指定すると PDF の配置ディレクトリを任意パスへ変更できます。未指定時はリポジトリ直下の `documents/` を自動作成します。
 - `VIEWER_LOG_PATH` を指定するとドキュメント検索・配信イベントがローテーション付きログ（最大 3 MB × 3 世代）として出力されます。未指定時は標準ログのみ利用します。
+- 実機設定・検証ログは `docs/test-notes/` 配下（例: `2025-10-26-docviewer-env.md`）に記録しています。
+  - `/etc/default/docviewer` を展開する場合は `config/docviewer.env.sample` をコピーし、上記テストノートの手順でログディレクトリなどを準備してください。
+  - RaspberryPiServer 側の 14 日チェック（`RaspberryPiServer/docs/mirror-verification.md`）と併せて運用状況を確認します。
 
 ### 主要な環境変数
 
@@ -43,6 +47,7 @@ ui/         プロトタイプやスタイル関連のリソース
 ### テスト
 
 `pytest` を使って Flask ビューアの設定や API 応答を検証できます。
+加えて `scripts/docviewer_check.py` で `/api/documents/<part>` の疎通確認とローカル PDF の存在チェックを実行できます。
 
 ```bash
 cd ~/DocumentViewer
@@ -50,6 +55,12 @@ python -m venv venv
 source venv/bin/activate
 pip install -r app/requirements.txt pytest
 pytest
+
+# 単発で DocumentViewer API を確認する例
+./scripts/docviewer_check.py --part TESTPART \
+  --api-base http://raspi-server.local:8501 \
+  --token "${VIEWER_API_TOKEN:-}" \
+  --docs-dir ~/DocumentViewer/documents
 ```
 
 ## 連携するシステム

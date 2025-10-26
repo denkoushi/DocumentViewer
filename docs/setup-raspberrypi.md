@@ -148,6 +148,7 @@ sudo bash scripts/usb-import.sh /dev/sda1
 - `VIEWER_SOCKET_BASE` を省略すると `VIEWER_API_BASE` が利用されます。`VIEWER_SOCKET_AUTO_OPEN=0` を指定すると Socket.IO 接続を無効化できます。
 - `VIEWER_ACCEPT_DEVICE_IDS` / `VIEWER_ACCEPT_LOCATION_CODES` はカンマ区切りで複数指定可能です。指定がある場合は一致したイベントのみで自動表示が発火します。
 - `VIEWER_LOG_PATH` を設定するとドキュメント検索や表示リクエストがローテーション付きで記録されます。ログが生成されない場合はディレクトリのパーミッションとパスを確認してください。
+- ログ出力と 14 日チェックの詳細は `docs/test-notes/2025-10-26-docviewer-env.md` を参照してください。
 工場現場では電源投入のみで利用できることが求められます。以下のスクリプトで DocumentViewer を systemd サービスとして登録すると、ラズパイ起動時に自動で Viewer が開始されます。
 
 ```bash

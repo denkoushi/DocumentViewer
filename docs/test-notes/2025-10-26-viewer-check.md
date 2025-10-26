@@ -17,4 +17,4 @@
 3. `docviewer.service` のログに同期完了時刻などを記録し、14 日チェックシートで参照できるようにする。→ **進行中**
    - `VIEWER_LOG_PATH` をアプリ側に追加し、アクセスログ（成功・未検出・不正パス）をローテーション付きで記録できるようにした。  
    - DocumentViewer 側で `tests/test_viewer_app.py` を追加し、API 応答・ログ出力・環境変数適用を `pytest` で検証（5 ケース）。  
-   - 実機（Window A の Pi）での `VIEWER_LOG_PATH` 動作確認、および 14 日チェックシートへのログ参照手順は未実施。
+   - 実機（Window A の Pi）での `VIEWER_LOG_PATH` 動作確認、および 14 日チェックシートへのログ参照手順は未実施。手順草案は `docs/test-notes/2025-10-26-docviewer-env.md` にまとめ済み。
