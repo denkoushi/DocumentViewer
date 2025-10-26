@@ -5,6 +5,9 @@
   <title>Document Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <script>
+    window.DOCVIEWER_CONFIG = {{ {"apiBase": api_base, "apiToken": api_token}|tojson }};
+  </script>
   <script defer src="{{ url_for('static', filename='app.js') }}"></script>
 </head>
 <body>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -10,8 +11,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DOCUMENTS_DIR = BASE_DIR / "documents"
 DOCUMENTS_DIR.mkdir(exist_ok=True)
 
+
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+
+API_BASE = os.getenv("VIEWER_API_BASE", "http://raspi-server.local:8501")
+API_TOKEN = os.getenv("VIEWER_API_TOKEN")
 
 
 def find_document_filename(part_number: str) -> Optional[str]:
@@ -41,7 +46,11 @@ def disable_cache(response):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template(
+        "index.html",
+        api_base=API_BASE,
+        api_token=API_TOKEN,
+    )
 
 
 @app.route("/health")

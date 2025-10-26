@@ -38,3 +38,4 @@ DocumentViewer リポジトリで作業するエージェント向けの指針�
 - ドキュメント運用ガイドライン: `docs/documentation-guidelines.md`
 - セットアップ手順: `docs/setup-raspberrypi.md`
 - 要件とロードマップ: `docs/requirements.md`
+- テストメモ: `docs/test-notes/2025-10-26-viewer-check.md`

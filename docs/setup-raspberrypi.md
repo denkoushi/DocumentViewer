@@ -136,6 +136,17 @@ sudo bash scripts/usb-import.sh /dev/sda1
 > 今後 systemd 常駐化する場合は、上記スクリプトをラップする Unit を作成し、tools01 ユーザーが `/media` を監視する構成へ更新する。
 
 ## DocumentViewer を常駐サービス化する
+
+### 10.1 API 接続設定 (任意)
+- REST API を RaspberryPiServer へ切り替える場合は `/etc/default/docviewer` に以下を定義してからサービスを再起動します。
+  ```bash
+  sudo tee /etc/default/docviewer <<'EOF'
+  VIEWER_API_BASE=http://raspi-server.local:8501
+  VIEWER_API_TOKEN=raspi-token-20251026
+  EOF
+  sudo systemctl restart docviewer.service
+  ```
+- `VIEWER_API_TOKEN` が不要な場合は行を削除してください。既存の `.service` テンプレートで `EnvironmentFile=-/etc/default/docviewer` を読み込むため、ファイルがない場合でもエラーになりません。
 工場現場では電源投入のみで利用できることが求められます。以下のスクリプトで DocumentViewer を systemd サービスとして登録すると、ラズパイ起動時に自動で Viewer が開始されます。
 
 ```bash
