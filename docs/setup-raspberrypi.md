@@ -140,20 +140,8 @@ sudo bash scripts/usb-import.sh /dev/sda1
 ### 10.1 API / Socket.IO 接続設定 (任意)
 - REST / Socket.IO の接続先を RaspberryPiServer へ切り替える場合は `/etc/default/docviewer` に以下を定義してからサービスを再起動します。
   ```bash
-  sudo tee /etc/default/docviewer <<'EOF'
-  VIEWER_API_BASE=http://raspi-server.local:8501
-  VIEWER_API_TOKEN=raspi-token-20251026
-  VIEWER_SOCKET_BASE=http://raspi-server.local:8501
-  VIEWER_SOCKET_PATH=/socket.io
-  VIEWER_SOCKET_AUTO_OPEN=1
-  # ローカル PDF 参照ディレクトリを明示したい場合（省略時は ~/DocumentViewer/documents）
-  # VIEWER_LOCAL_DOCS_DIR=/srv/documentviewer/documents
-  # アクセスログをファイルへ出力する場合（省略時はログ未出力）
-  # VIEWER_LOG_PATH=/var/log/document-viewer/client.log
-  # 必要なら端末ごとのフィルタを設定（例: HANDHELD-01 のみ受信）
-  # VIEWER_ACCEPT_DEVICE_IDS=HANDHELD-01
-  # VIEWER_ACCEPT_LOCATION_CODES=RACK-A1
-  EOF
+  sudo install -m 640 config/docviewer.env.sample /etc/default/docviewer
+  sudo nano /etc/default/docviewer
   sudo systemctl restart docviewer.service
   ```
 - `VIEWER_API_TOKEN` が不要な場合は行を削除してください。既存の `.service` テンプレートで `EnvironmentFile=-/etc/default/docviewer` を読み込むため、ファイルがない場合でもエラーになりません。

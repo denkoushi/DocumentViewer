@@ -72,6 +72,7 @@
 - PDF 更新履歴: バージョン管理は手動 (Excel 原稿と PDF の履歴は PC 側で管理)。
 - 定期点検: 月次で端末の状態、ストレージ空き容量、USB ポートを点検。
 - 障害対応: 表示できない PDF がある場合は、PC 側原稿の再出力またはファイル破損の確認を実施。
+- ログ保管: `VIEWER_LOG_PATH` を設定し、DocumentViewer のアクセスログ（ヒット/未検出/拒否）をローテーション付きで保存。Window A で RaspberryPiServer を参照する際は、このログを 14 日チェックシートで参照できる場所（例: `/var/log/document-viewer/`）に配置する。
 - ミラー検証期間中は RaspberryPiServer の日次チェックリスト（`docs/test-notes/mirror-check-template.md`）と連携し、DocumentViewer に最新データが反映されていることと `docviewer.service` のログを記録する。
 
 ## 現在の進捗メモ（2025-10-26 時点）

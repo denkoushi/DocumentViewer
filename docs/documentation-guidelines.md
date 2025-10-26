@@ -7,6 +7,7 @@ DocumentViewer リポジトリのドキュメント役割と記述ルールを�
 | ファイル | 主な対象者 | 目的 |
 | --- | --- | --- |
 | `README.md` | 初めてクローンする人 | プロジェクト概要、主要ドキュメントへのリンク、リポジトリ構成。
+| `CHANGELOG.md` | 開発者 / 運用者 | 適用済みの変更履歴。未実装事項は含めない。
 | `docs/setup-raspberrypi.md` | システム管理者 | Raspberry Pi へのセットアップ手順、運用時の更新方法や importer 導入手順。
 | `docs/requirements.md` | プロダクトオーナー / 開発者 | 機能要件、非機能要件、優先度、決定事項。実装や運用の詳細は他ドキュメントへリンクする。
 | `docs/documentation-guidelines.md` | 全員 | 本ガイドライン。更新時の参照先。
