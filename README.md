@@ -24,7 +24,7 @@ docs/test-notes/ 実機検証ログ・チェックリスト
 - 開発時は `app/` ディレクトリで仮想環境を作成し、`FLASK_APP=viewer.py flask run --port 5000` などで起動できます。
 - Raspberry Pi 上で常時運用する場合は、`docs/setup-raspberrypi.md` の手順に従って systemd サービス登録と kiosk 起動を設定してください。
 - `VIEWER_API_BASE` / `VIEWER_SOCKET_BASE` などの環境変数で RaspberryPiServer 連携先を切り替えられます（下表参照）。
-- `VIEWER_LOCAL_DOCS_DIR` を指定すると PDF の配置ディレクトリを任意パスへ変更できます。未指定時はリポジトリ直下の `documents/` を自動作成します。
+- `VIEWER_LOCAL_DOCS_DIR` を指定すると PDF の配置ディレクトリを任意パスへ変更できます。未指定時はリポジトリ直下の `documents/` を自動作成します（USB 取り込みを使う場合は `imports/failed/` も合わせて作成しておきます）。
 - `VIEWER_LOG_PATH` を指定するとドキュメント検索・配信イベントがローテーション付きログ（最大 3 MB × 3 世代）として出力されます。未指定時は標準ログのみ利用します。
 - 実機設定・検証ログは `docs/test-notes/` 配下（例: `2025-10-26-docviewer-env.md`）に記録しています。
   - `/etc/default/docviewer` を展開する場合は `config/docviewer.env.sample` をコピーし、上記テストノートの手順でログディレクトリなどを準備してください。
@@ -42,6 +42,7 @@ docs/test-notes/ 実機検証ログ・チェックリスト
 | `VIEWER_ACCEPT_DEVICE_IDS` | 受信対象の `device_id` をカンマ区切りで指定 | 未指定で全受信 |
 | `VIEWER_ACCEPT_LOCATION_CODES` | 受信対象の `location_code` をカンマ区切りで指定 | 未指定で全受信 |
 | `VIEWER_LOCAL_DOCS_DIR` | PDF を格納するディレクトリ | `~/DocumentViewer/documents` |
+| `VIEWER_IMPORT_FAILED_DIR` | 取り込み失敗時に退避するフォルダ | `~/DocumentViewer/imports/failed` |
 | `VIEWER_LOG_PATH` | ローテーション付きログの出力先 | 未出力 |
 
 ### テスト
@@ -62,6 +63,9 @@ pytest
   --token "${VIEWER_API_TOKEN:-}" \
   --docs-dir ~/DocumentViewer/documents
 ```
+
+USB importer を利用する場合は、上記ディレクトリに加えて `mkdir -p ~/DocumentViewer/imports/failed`
+を実行し、取り込み失敗時の退避先を用意してください。
 
 ## 連携するシステム
 - **tool-management-system02（Window A）**: 右ペインの所在ビューと連動し、OnSiteLogistics から送られた `part_locations` を Socket.IO 経由で参照します。DocumentViewer 自体も RaspberryPiServer の `part_location_updated` / `scan_update` を受信して該当 PDF を自動表示します。USB 同期スクリプト（`scripts/usb-import.sh`）は Window A の `usb_master_sync.sh` から呼び出され、要領書 PDF を共通運用します。

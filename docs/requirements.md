@@ -76,6 +76,8 @@
 - ログ保管: `VIEWER_LOG_PATH` を設定し、DocumentViewer のアクセスログ（ヒット/未検出/拒否）をローテーション付きで保存。Window A で RaspberryPiServer を参照する際は、このログを 14 日チェックシートで参照できる場所（例: `/var/log/document-viewer/`）に配置する。手順は `docs/test-notes/2025-10-26-docviewer-env.md` を参照。
 - ミラー検証期間中は RaspberryPiServer の日次チェックリスト（`docs/test-notes/mirror-check-template.md`）と連携し、DocumentViewer に最新データが反映されていることと `docviewer.service` のログを記録する。
 - 検証ログ: `docs/test-notes/` に日付入りで記録し、サーバー側 `mirror-verification` ドキュメントと合わせて進捗可視化を行う。
+- USB importer を運用する端末では、初期化時に `mkdir -p ~/DocumentViewer/documents ~/DocumentViewer/imports/failed`
+  を実行して保存先と失敗退避用のディレクトリを作成しておく。存在しない場合、取り込みスクリプトがエラー終了する。
 
 ## 現在の進捗メモ（2025-10-26 時点）
 - REST / Socket.IO の接続先を RaspberryPiServer へ切り替え、`part_location_updated` / `scan_update` 受信時に DocumentViewer が自動で該当 PDF を開く動作を実装済み（`VIEWER_SOCKET_*` 系環境変数で制御）。

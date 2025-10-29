@@ -37,7 +37,7 @@ FLASK_APP=viewer.py flask run --host 0.0.0.0 --port 5000
 ## 6. ドキュメントフォルダと PDF 配置
 ```bash
 cd ~/DocumentViewer
-mkdir -p documents
+mkdir -p documents imports/failed
 cp <元PDF> documents/TEST-001.pdf  # サンプル
 ```
 
