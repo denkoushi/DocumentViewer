@@ -6,7 +6,18 @@
 
 ## 手順
 
-1. テンプレートコピー
+1. 環境ファイル展開
+    - 自動化スクリプトを利用する場合
+      ```bash
+      sudo ./scripts/install_docviewer_env.sh \
+        --owner tools01:tools01 \
+        --api-base http://raspi-server.local:8501 \
+        --docs-dir /home/tools01/DocumentViewer/documents \
+        --log-path /var/log/document-viewer/client.log
+      ```
+      - 既存の `/etc/default/docviewer` がある場合は `--force` オプションでバックアップを残しつつ上書きできる。
+      - `--dry-run` を付けると作業内容のみ確認できる。
+    - 手動で行う場合
     ```bash
     sudo install -m 640 ~/DocumentViewer/config/docviewer.env.sample /etc/default/docviewer
     sudo nano /etc/default/docviewer
@@ -15,7 +26,7 @@
     - `VIEWER_LOCAL_DOCS_DIR=/home/tools01/DocumentViewer/documents`（Window A 側で PDF を参照する場合）。
     - `VIEWER_LOG_PATH=/var/log/document-viewer/client.log` を指定。
 
-2. ディレクトリ準備
+2. ディレクトリ準備（スクリプト利用時は自動作成される）
     ```bash
     sudo install -d -o tools01 -g tools01 -m 750 /var/log/document-viewer
     sudo touch /var/log/document-viewer/client.log

@@ -29,7 +29,14 @@ docs/test-notes/ 実機検証ログ・チェックリスト
 - `VIEWER_LOG_PATH` を指定するとドキュメント検索・配信イベントがローテーション付きログ（最大 3 MB × 3 世代）として出力されます。未指定時は標準ログのみ利用します。
 - 実機設定・検証ログは `docs/test-notes/` 配下（例: `2025-10-26-docviewer-env.md`）に記録しています。
   - `/var/log/document-viewer/import.log` を確認したい場合は `scripts/show_import_log.sh` を使うと便利です（`FILTER=ERROR` や `LINES=100` などの環境変数で絞り込み可）。
-  - `/etc/default/docviewer` を展開する場合は `config/docviewer.env.sample` をコピーし、上記テストノートの手順でログディレクトリなどを準備してください。
+  - 環境ファイルの展開は `sudo ./scripts/install_docviewer_env.sh` を利用すると、自動で `/etc/default/docviewer` とログディレクトリを整備できます。
+    ```bash
+    sudo ./scripts/install_docviewer_env.sh \
+      --owner tools01:tools01 \
+      --api-base http://raspi-server.local:8501 \
+      --docs-dir /home/tools01/DocumentViewer/documents \
+      --log-path /var/log/document-viewer/client.log
+    ```
   - RaspberryPiServer 側の 14 日チェック（`RaspberryPiServer/docs/mirror-verification.md`）と併せて運用状況を確認します。
 
 ### 主要な環境変数
