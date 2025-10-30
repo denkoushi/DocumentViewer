@@ -25,6 +25,7 @@ docs/test-notes/ 実機検証ログ・チェックリスト
 - Raspberry Pi 上で常時運用する場合は、`docs/setup-raspberrypi.md` の手順に従って systemd サービス登録と kiosk 起動を設定してください。
 - `VIEWER_API_BASE` / `VIEWER_SOCKET_BASE` などの環境変数で RaspberryPiServer 連携先を切り替えられます（下表参照）。
 - `VIEWER_LOCAL_DOCS_DIR` を指定すると PDF の配置ディレクトリを任意パスへ変更できます。未指定時はリポジトリ直下の `documents/` を自動作成します（USB 取り込みを使う場合は `imports/failed/` も合わせて作成しておきます）。
+- `raspi-server.local` が解決できない場合は、Pi5 側のホスト名が `raspi-server` になっているか、クライアント側の Avahi (mDNS) が起動しているかを確認してください。
 - `VIEWER_LOG_PATH` を指定するとドキュメント検索・配信イベントがローテーション付きログ（最大 3 MB × 3 世代）として出力されます。未指定時は標準ログのみ利用します。
 - 実機設定・検証ログは `docs/test-notes/` 配下（例: `2025-10-26-docviewer-env.md`）に記録しています。
   - `/etc/default/docviewer` を展開する場合は `config/docviewer.env.sample` をコピーし、上記テストノートの手順でログディレクトリなどを準備してください。
