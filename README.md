@@ -28,6 +28,7 @@ docs/test-notes/ 実機検証ログ・チェックリスト
 - `raspi-server.local` が解決できない場合は、Pi5 側のホスト名が `raspi-server` になっているか、クライアント側の Avahi (mDNS) が起動しているかを確認してください。
 - `VIEWER_LOG_PATH` を指定するとドキュメント検索・配信イベントがローテーション付きログ（最大 3 MB × 3 世代）として出力されます。未指定時は標準ログのみ利用します。
 - 実機設定・検証ログは `docs/test-notes/` 配下（例: `2025-10-26-docviewer-env.md`）に記録しています。
+  - `/var/log/document-viewer/import.log` を確認したい場合は `scripts/show_import_log.sh` を使うと便利です（`FILTER=ERROR` や `LINES=100` などの環境変数で絞り込み可）。
   - `/etc/default/docviewer` を展開する場合は `config/docviewer.env.sample` をコピーし、上記テストノートの手順でログディレクトリなどを準備してください。
   - RaspberryPiServer 側の 14 日チェック（`RaspberryPiServer/docs/mirror-verification.md`）と併せて運用状況を確認します。
 
