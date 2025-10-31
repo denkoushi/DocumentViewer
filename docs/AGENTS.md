@@ -35,6 +35,7 @@ DocumentViewer リポジトリで作業するエージェント向けの指針�
 - 決定事項は `docs/requirements.md` へ反映し、関連ドキュメントのリンクも更新する。
 
 ## 6. 参考リンク
+- ドキュメント索引: `docs/docs-index.md`
 - ドキュメント運用ガイドライン: `docs/documentation-guidelines.md`
 - セットアップ手順: `docs/setup-raspberrypi.md`
 - 要件とロードマップ: `docs/requirements.md`
