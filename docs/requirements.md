@@ -13,7 +13,7 @@
 ## 3. 使用環境
 - **サーバー**: Raspberry Pi 5（RaspberryPiServer リポジトリ）上で Docker Compose または systemd で常駐。
 - **クライアント**: Window A (Pi4) のブラウザ iframe (`http://raspi-server-*.local:8501/viewer`) で表示。
-- **データ保管**: PDF は `/srv/rpi-server/documents/` に集約。USB ingest や REST API 経由で更新する。
+- **データ保管**: PDF は `/srv/rpi-server/documents/` に集約。USB ingest や REST API 経由で更新する。macOS などの開発環境では `docker-compose.yml` の bind mount を用い、`./mnt/documents/` を同等パスとして扱い本番構成と一致させる。
 
 ## 4. ドキュメント更新フロー
 1. PC で Excel テンプレートから PDF を生成（ファイル名＝部品番号）。
@@ -36,7 +36,8 @@
 
 ## 7. ファイル構成
 ```
-/srv/rpi-server/documents/          # PDF 集約先
+/srv/rpi-server/documents/          # 本番運用時の PDF 集約先
+/home/tools02/DocumentViewer/mnt/documents/  # 開発時に bind mount するローカルディレクトリ
 /home/tools02/DocumentViewer/app/    # Flask アプリケーション
 /var/log/document-viewer/client.log  # ログ（VIEWER_LOG_PATH 指定時）
 ```
