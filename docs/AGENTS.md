@@ -12,7 +12,7 @@ DocumentViewer リポジトリで作業するエージェント向けの指針�
 
 ## 2. 作業フロー
 1. `git status -sb` でブランチとローカル変更を確認する。
-2. README / requirements / setup ドキュメントを読み、最新方針と矛盾がないかを把握する。
+2. README / requirements / setup ドキュメントを読み、最新方針と矛盾がないかを把握する。`docs/requirements.md` の機能要件は ✅/☐ で進捗を管理し、変更があれば必ず更新する。
 3. 仕様不明点があれば作業前にユーザーへ確認し、回答を `docs/requirements.md` に記録する。
 4. 小さな修正は `main` に直接コミットしてよい。大きな変更・後戻りしづらい改修はブランチを切り、検証後にマージする。
 5. コードや手順を更新した場合は、関連ドキュメント（setup・requirements 等）を忘れずに反映する。
