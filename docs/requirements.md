@@ -1,196 +1,53 @@
-# Document Viewer Requirements
+# DocumentViewer 要件（2025-10-31 更新）
 
-## 背景と目的
-- 金属加工工場で使用する部品別の作業要領書を、Raspberry Pi の表示端末で閲覧できるようにする。
-- バーコード付き移動票をスキャンして該当部品の要領書を即時表示し、現場の作業効率と正確性を向上させる。
+## 1. 背景
+- DocumentViewer は RaspberryPiServer（Pi5）上の Flask アプリとして `/viewer` を提供し、Window A (tool-management-system02) の右ペインから iframe で利用する。
+- Pi Zero（OnSiteLogistics）から送信された所在イベントは RaspberryPiServer で集約され、Socket.IO で DocumentViewer と Window A の UI に同時通知される。
+- 本リポジトリは DocumentViewer のソースコード・systemd サービス・インポートスクリプトを提供し、Pi5 側の運用を担う。
 
-## ステークホルダー
-- 現場オペレーター: 作業時に要領書を閲覧する。Excel で原稿を作成する。
-- 生産管理担当者: 要領書テンプレートや更新手順を管理する。
-- システム管理者 (想定): Raspberry Pi 端末を保守し、データの取り込みやアプリ更新を行う。
+## 2. ステークホルダー
+- **現場オペレーター**: Window A 右ペインを通じて PDF 要領書を閲覧する。
+- **生産管理担当**: Excel 原稿を PDF 化し、USB (`TM-INGEST`/`TM-DIST`) または RaspberryPiServer importer へ登録する。
+- **システム管理者**: RaspberryPiServer 上の DocumentViewer を保守し、ログ・設定・サービス監視を行う。
 
-## 使用環境
-- ハードウェア: Raspberry Pi 4 (4GB 以上推奨), USB バーコードハンディリーダ, USB マウス, フルHD モニター (1920x1080)。
-- OS: Raspberry Pi OS 64bit。
-- ネットワーク: 初期フェーズは単体運用 (オフライン)。
-- 動作形態: 常時起動し、画面はフルスクリーン表示で固定。
+## 3. 使用環境
+- **サーバー**: Raspberry Pi 5（RaspberryPiServer リポジトリ）上で Docker Compose または systemd で常駐。
+- **クライアント**: Window A (Pi4) のブラウザ iframe (`http://raspi-server-*.local:8501/viewer`) で表示。
+- **データ保管**: PDF は `/srv/rpi-server/documents/` に集約。USB ingest や REST API 経由で更新する。
 
-## ドキュメント作成・更新フロー
-1. 現場オペレーターが PC で提供された Excel テンプレートに従って作業要領書を作成・更新する。
-2. 完成した Excel を PDF へエクスポート (ファイル名は部品番号そのものを使用)。
-3. PDF を USB メモリーの指定フォルダへコピー。
-4. USB メモリーを Raspberry Pi に接続。
-5. Raspberry Pi 上のインポートツールが USB 内の PDF を確認し、
-   - 同一部品番号のファイルが存在する場合は上書き更新、
-   - 新規部品番号の場合は新規登録する。
-6. インポート完了後、ビューワアプリをリロードまたは再起動して最新の PDF を参照可能にする。
+## 4. ドキュメント更新フロー
+1. PC で Excel テンプレートから PDF を生成（ファイル名＝部品番号）。
+2. USB `TM-INGEST/docviewer/` へ配置し RaspberryPiServer で ingest、または API を利用して直接アップロード。
+3. RaspberryPiServer が `/srv/rpi-server/documents` を更新し、Window A の USB 配布 (`tool-dist-sync.sh`) と共有する。
+4. DocumentViewer は最新 PDF を参照し、Socket.IO イベントで通知された部品番号の PDF を自動表示。
 
-> 運用支援: Excel テンプレートと PDF 書き出し手順、USB コピー手順をマニュアル化してオペレーターへ展開する。
+## 5. 機能要件
+- **Socket.IO 連携**: `part_location_updated` / `scan_update` を受信し、遅延なく対象 PDF を表示。直近イベントをキューに保ち、UI にステータスを表示。
+- **REST API**: `/api/documents/<part>` が JSON を返却し、Window A のフォールバック検索やテストスクリプトから利用できる。
+- **検索 UI**: `/viewer` には手動検索欄と履歴（直近10件）を提供。PDF 未登録時は「PDFが見つかりません」とログ出力。
+- **設定**: `.env` / systemd EnvironmentFile で `VIEWER_API_BASE`, `VIEWER_SOCKET_BASE`, `VIEWER_ACCEPT_DEVICE_IDS` などを切り替え。Pi5 のホスト名が `raspi-server-*.local` に変わった場合でも再設定で追随できる。
+- **ログ**: `VIEWER_LOG_PATH` が設定されていれば JSON ローテーションログを `/var/log/document-viewer/client.log` に出力。未設定でも標準出力に INFO を記録。
 
-## ビューワの基本操作フロー
-1. ビューワアプリ起動で全画面表示。
-2. 初期画面は待受状態。バーコード入力欄へ自動フォーカス。
-3. 移動票のバーコードをスキャン (キーボードエミュレーション, Enter 送出想定)。
-4. 内部ストレージの `documents/<部品番号>.pdf` を検索し、該当 PDF を表示。
-5. マウス操作でページ送り (画面上の「前へ」「次へ」ボタン、またはスクロール)。
-6. ESC などの特別操作は不要。一定時間操作が無い場合は待受画面へ戻る挙動を検討 (オプション)。
+## 6. 非機能要件
+- **応答時間**: イベント受信から 3 秒以内に PDF の 1 ページ目を表示。
+- **可用性**: Socket.IO 断時は UI で警告し 5 秒間隔で自動再接続。復旧時は成功メッセージを表示。
+- **保守性**: 実機検証ログを `docs/test-notes/` に残し、14 日耐久チェック (`docs/test-notes/2025-11-01-14day-check.md`) へ転記。
+- **セキュリティ**: REST API へのアクセスは RaspberryPiServer と同一トークンポリシーを用いる。ログに失敗理由を記録。
 
-## 機能要件
-- 部品番号入力
-  - バーコードリーダからのキーボード入力を受け取り、Enter で検索を実行する。
-  - 手入力対応 (ソフトキーボード/物理キーボード) は将来的な検討。
-- ドキュメント検索・表示
-  - ローカルフォルダに保管された PDF を部品番号で特定し表示する。
-  - PDF 未登録の場合はエラーメッセージをフルスクリーンで表示し、一定時間後に待機画面へ戻る。
-- ページ操作
-  - マウスクリックでページ送り/戻し。
-  - サムネイルやジャンプ機能は将来拡張とする。
-- インポート
-  - USB メモリ接続を検知し、指定フォルダ配下の PDF を `/home/pi/document-viewer/documents/` へコピーする。
-  - コピー処理中は進捗を表示し、完了後に結果 (成功/エラー) を通知。
-- 設定
-  - 設定ファイル (例: `config.json`) でコピー先パス、待機タイムアウトなどを管理できるようにする。
-
-## 非機能要件
-- 性能: バーコードスキャンから 3 秒以内に該当 PDF の 1 ページ目を表示。
-- 安定性: Raspberry Pi の常時稼働を想定し、OS 起動時に自動でビューワアプリが立ち上がる。
-- 可用性: PDF が破損している場合はエラーログとユーザー通知を行う。
-- 保守性: ドキュメントは部品番号=ファイル名の簡易ルールで管理。構造はフラット (サブフォルダ無し)。
-- セキュリティ: 初期フェーズではアクセス制限は不要。将来的な拡張に備えて設計を分離しておく。
-
-## ファイル構造案
+## 7. ファイル構成
 ```
-/home/pi/document-viewer/
-├── app/                  # ビューワアプリケーション
-├── documents/            # 部品別 PDF 保管フォルダ (部品番号.pdf)
-├── imports/              # USB から一時コピーする領域 (必要に応じて)
-└── config.json           # パスやタイムアウトなどの設定
+/srv/rpi-server/documents/          # PDF 集約先
+/home/tools02/DocumentViewer/app/    # Flask アプリケーション
+/var/log/document-viewer/client.log  # ログ（VIEWER_LOG_PATH 指定時）
 ```
 
-## 運用・メンテナンス
-- 端末のバックアップ: 定期的に SD カードイメージをバックアップ。
-- PDF 更新履歴: バージョン管理は手動 (Excel 原稿と PDF の履歴は PC 側で管理)。
-- 定期点検: 月次で端末の状態、ストレージ空き容量、USB ポートを点検。
-- 障害対応: 表示できない PDF がある場合は、PC 側原稿の再出力またはファイル破損の確認を実施。
-- ログ保管: `VIEWER_LOG_PATH` を設定し、DocumentViewer のアクセスログ（ヒット/未検出/拒否）をローテーション付きで保存。Window A で RaspberryPiServer を参照する際は、このログを 14 日チェックシートで参照できる場所（例: `/var/log/document-viewer/`）に配置する。
-- ログ保管: `VIEWER_LOG_PATH` を設定し、DocumentViewer のアクセスログ（ヒット/未検出/拒否）をローテーション付きで保存。Window A で RaspberryPiServer を参照する際は、このログを 14 日チェックシートで参照できる場所（例: `/var/log/document-viewer/`）に配置する。手順は `docs/test-notes/2025-10-26-docviewer-env.md` を参照。
-- ミラー検証期間中は RaspberryPiServer の日次チェックリスト（`docs/test-notes/mirror-check-template.md`）と連携し、DocumentViewer に最新データが反映されていることと `docviewer.service` のログを記録する。
-- 検証ログ: `docs/test-notes/` に日付入りで記録し、サーバー側 `mirror-verification` ドキュメントと合わせて進捗可視化を行う。
-- RaspberryPiServer との通信は mDNS (`raspi-server.local`) を前提とする。Pi5 のホスト名を `raspi-server` に設定し、クライアント側では `/etc/hosts` に固定 IP を残さない。解決できない場合は Avahi の状態を確認し、`ping raspi-server.local` で疎通をテストする。
-- USB importer を運用する端末では、初期化時に `mkdir -p ~/DocumentViewer/documents ~/DocumentViewer/imports/failed`
-  を実行して保存先と失敗退避用のディレクトリを作成しておく。存在しない場合、取り込みスクリプトがエラー終了する。
+## 8. 運用・メンテナンス
+- **サービス操作**: `sudo systemctl restart docviewer.service`
+- **ログ確認**: `sudo tail -n 50 /var/log/document-viewer/client.log`
+- **USB 連携**: RaspberryPiServer の `tool-dist-sync.sh` により Window A と共通の `TM-DIST` を利用。
+- **障害対応**: PDF が表示されない場合は `/srv/rpi-server/documents` にファイルが存在するかとログを確認。必要に応じて importer 再実行。
 
-## 現在の進捗メモ（2025-10-26 時点）
-- REST / Socket.IO の接続先を RaspberryPiServer へ切り替え、`part_location_updated` / `scan_update` 受信時に DocumentViewer が自動で該当 PDF を開く動作を実装済み（`VIEWER_SOCKET_*` 系環境変数で制御）。
-- USB インポート／サービス化手順は整備済み。今後は新サーバーからの DIST USB を受け取り、日次チェックシートで反映状況を記録する運用を開始する。
-- 次フェーズの開発作業:
-  - RaspberryPiServer から受信した所在情報を右ペイン UI（Window A 側）で可視化するための postMessage プロトコル整備。
-  - `VIEWER_ACCEPT_DEVICE_IDS` / `VIEWER_ACCEPT_LOCATION_CODES` を運用手順に組み込み、複数端末設置時の自動開閉ポリシーを定義する。
-  - `docviewer.service` のログ出力フォーマットを見直し、14 日検証で必要な情報（更新対象ファイル、同期時刻など）を残す。
-
-## 将来課題・拡張余地
-- PDF 以外の軽量フォーマット (HTML/画像) への移行検討。
-- ネットワーク経由での自動同期、差分更新機能。
-- バーコード以外の検索フォームや履歴表示。
-- 操作ログ収集、閲覧統計の可視化。
-- 多言語対応や音声指示などのアクセシビリティ拡張。
-- Window A（tool-management-system02）および OnSiteLogistics から提供される所在・工程データとのリアルタイム連携拡張（現在は PDF 自動表示のみ。所在一覧の描画、ハイライト連携、Window C サイネージへの共有を検討）。
-
-## オープン課題
-- インポートツールの具体的な実装方式 (GUI/コマンドライン、手動実行か自動検知か)。
-- 待受画面のデザインとロゴなどのブランド要素。
-- PDF 表示ライブラリ選定 (Chromium kiosk, Electron, 独自ビューア)。
-- オフライン環境での時刻同期・端末メンテナンス手順。
-
-
-## 次の作業指示
-- インポートツール実装方式を確定する: 1) USB を /media/usb など固定マウントポイントへ自動マウントする仕組みを確認し、2) `document-importer.sh` (仮称) で `*.pdf` を `documents/` にコピーし上書きするコマンド仕様を決め、3) コピー後にビューワへリロード指示を送る方法 (例: systemd サービス再起動) を決める。
-- ビューワ UI ワイヤーフレームを作成する: 1) 待機画面・表示中画面・エラー画面の3パターンのレイアウトを紙かツール (例: Figma, PowerPoint) で描き、2) バーコード入力欄・ページ送りボタンの配置とサイズを具体的に決め、3) マウス操作のみで完結することを確認するチェックリストを作る。
-
-## インポートツール設計
-- 目的: USB メモリ内の `*.pdf` を `/home/pi/document-viewer/documents/` に上書きコピーし、完了後にビューワへ反映させる。
-- 自動マウント想定: Raspberry Pi OS 標準の `pcmanfm` 自動マウントを利用。USB を挿入すると `/media/pi/<ボリューム名>/` にマウントされる前提で処理する。
-- Viewer 本体は systemd サービス（`docviewer.service`）で常駐させ、電源投入で自動起動できるようにする。
-- 実装構成
-  - `document-importer.service`: systemd サービス。`inotifywait` で `/media/pi/` 以下のマウントイベントを監視し、USB 挿入時にスクリプトを起動。
-  - `document-importer.sh`: 実際のコピー処理を行うシェルスクリプト。
-  - `import.log`: `/var/log/document-viewer/import.log` に結果とエラーを追記。
-- `document-importer.sh` の仕様
-  1. 引数でマウントポイントパスを受け取る (例: `/media/pi/USB_DRIVE`).
-  2. `find "$MOUNT" -maxdepth 1 -type f -name '*.pdf'` で PDF 一覧を取得。
-  3. 1件も無ければログに "no pdf" を記録し終了。
-  4. `documents/` に同名ファイルが存在すれば `mv` ではなく `cp` (上書き) を使用。コピー前に一時フォルダ `/home/pi/document-viewer/imports/` に退避してから移動。
-  5. コピー完了後に `sync` を実行し、USB を安全に抜ける旨のメッセージを HDMI 表示または通知領域に表示 (初期はターミナル出力でも可)。
-  6. 最後に `systemctl restart document-viewer.service` でビューワ (仮) をリロード。
-  7. すべての結果をタイムスタンプ付きでログ出力。
-- エラーハンドリング
-  - コピー失敗時は `/home/pi/document-viewer/imports/failed/` に問題ファイルを移し、ログに理由を残す。
-  - USB マウントが読み取り専用の場合は警告し処理を中断。
-- 手動実行手順 (バックアップ)
-  1. 端末で `sudo systemctl stop document-importer.service`。
-  2. USB を挿入し、`bash document-importer.sh /media/pi/<ボリューム名>` を実行。
-  3. ログで結果を確認後、`sudo systemctl start document-importer.service`。
-
-## ビューワ UI ワイヤーフレーム定義
-- 画面サイズは 1920x1080 を想定し、視認性重視で 24pt 以上のフォントを使用。
-- 待機画面
-  - 構成要素: ヘッダー (システム名)、中央メッセージ ("バーコードをスキャンしてください"), 隠しテキスト入力ボックス。
-  - レイアウト (概略)
-    ```
-    ------------------------------------------------
-    | Document Viewer (左上)                        |
-    |                                                |
-    |             [バーコード待機中]                |
-    |    (ここに説明テキストとアイコン)             |
-    |                                                |
-    |  [入力フォームは画面下中央で透明化]           |
-    ------------------------------------------------
-    ```
-  - フォーカス管理: ページ遷移後も常に入力ボックスへフォーカスを戻す。
-- 表示中画面
-  - 構成要素: 左側に PDF 表示領域 (画面幅の約 70%)、右側に追加情報パネル (工程メモや注意事項を表示するスペース)。
-  - PDF は上下いっぱいに表示し、Chromium の PDF ツールバーとスクロールでページ移動する。戻るボタンはヘッダー右上に配置。上部メタバーは高さを抑えて情報密度を高める。
-  - レイアウト (概略)
-    ```
-    --------------------------------------------------------------
-    | Document Viewer - 部品番号 XXXX     |   情報パネル          |
-    |-------------------------------------|------------------------|
-    |                                     |                        |
-    |             PDF ビューア            |   (追加情報スペース)   |
-    |                                     |                        |
-    --------------------------------------------------------------
-    ```
-  - 情報パネルは現在はダミー表示。将来的に検査結果や注意事項などを表示するための余白として利用する。
-- エラー画面
-  - 条件: 部品番号に対応する PDF が無い／破損。
-  - 表示: 赤系バナーで「該当資料が見つかりません」＋部品番号表示＋「管理者へ連絡してください」メッセージ。
-  - 5 秒後に自動で待機画面へ戻るタイマーを画面下に表示。
-- マウス操作チェックリスト
-  1. 待機画面→バーコードスキャン→Enter (自動) で表示画面に遷移。
-  2. 表示画面で「次へ」「前へ」ボタンがクリック可能で反応する。
-  3. エラー画面はクリック不要で自動復帰。必要に応じて「待機画面へ戻る」ボタンを設ける。
-  4. ビューワ内で右クリックメニューや不要なUI要素が出ないよう Chromium kiosk モードを利用。
-
-
-## インポートツールの要件
-- USB から PDF を取り込み、最新データのみ `/home/pi/document-viewer/documents/` に反映すること。
-- `document-importer.sh` はマウントポイントを引数に受け取り、検証・コピー・ログ出力までを自動化する。
-- `document-importer.service` (systemd) は inotify で `/media/pi/` を監視し、USB 挿入時に importer を呼び出す。
-- 取り込みの結果とエラーは `/var/log/document-viewer/import.log` に記録する。
-- 手動実行や導入手順などの具体的な操作は `docs/setup-raspberrypi.md` を参照。
-
-## UI プロトタイプ
-- `ui/prototype.html` に待機・表示・エラーの3画面を並べたスタティックモックを作成。
-  - ブラウザで開いてレイアウトを確認できる。
-  - CSS でページ送りボタンサイズや情報密度を調整しやすいようにしてある。
-  - 実装時は Chromium kiosk モード＋PDF.js などを組み合わせる想定。
-
-
-## ビューワ実装メモ
-- Flask (`app/viewer.py`) が `/` で UI、`/api/documents/<部品番号>` で PDF の存在を返す API を提供する。
-- フロントエンド (`app/static/app.js`) はバーコード入力を常時フォーカスし、PDF を iframe 表示する。
-- 自動復帰や kiosk モードでの起動を前提とし、詳細な起動・運用手順は `docs/setup-raspberrypi.md` を参照。
-
-## 関連ドキュメント
-- Raspberry Pi へのセットアップと運用手順: `docs/setup-raspberrypi.md`
-- ドキュメント運用ルール: `docs/documentation-guidelines.md`
+## 9. 今後の課題
+- Socket.IO 断状態を UI で明示し、リトライ状況を表示する。
+- Playwright による E2E テストを `docs/e2e-plan.md` に沿って追加。
+- 多言語 UI・アクセシビリティ対応の検討。

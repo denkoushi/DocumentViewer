@@ -11,3 +11,9 @@
 - `docs/test-notes/2025-10-26-viewer-check.md` にログ対応状況を反映。
 - `/etc/default/docviewer` テンプレート (`config/docviewer.env.sample`) とログ手順ノート (`docs/test-notes/2025-10-26-docviewer-env.md`) を追加。
 - API 疎通確認用スクリプト `scripts/docviewer_check.py` を追加し、テスト (`tests/test_docviewer_check.py`) を整備。
+
+## 2025-10-31
+
+- DocumentViewer の要件 (`docs/requirements.md`) を Pi5 サーバー集約後の構成に合わせて再整備。
+- README / setup ガイドに Pi5 ホスト名 (`raspi-server-*.local`) や追加依存パッケージを反映。
+- ドキュメント索引 (`docs/docs-index.md`) とテストノート索引を棚卸しし、✅ を記録。

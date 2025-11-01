@@ -1,6 +1,6 @@
 # Raspberry Pi Setup Guide
 
-このドキュメントでは、Raspberry Pi 上で Document Viewer を自動起動し、PDF を閲覧できるようにするまでの手順をまとめる。ドキュメント種別ごとの役割については `docs/documentation-guidelines.md` を参照してください。
+このドキュメントでは RaspberryPiServer（Pi5）上で DocumentViewer を常駐させ、Window A (Pi4) から `/viewer` を参照できるようにする手順をまとめる。Pi5 以外の端末で再構築する場合も同じ手順を使う。ドキュメント種別ごとの役割は `docs/documentation-guidelines.md` を参照。
 
 ## 1. OS 更新
 ```bash
@@ -10,7 +10,7 @@ sudo apt upgrade -y
 
 ## 2. 必要パッケージのインストール
 ```bash
-sudo apt install -y python3-venv python3-pip inotify-tools chromium-browser git
+sudo apt install -y python3-venv python3-pip inotify-tools chromium-browser git jq rsync zstd
 ```
 
 ## 3. リポジトリ取得
@@ -82,6 +82,8 @@ X-GNOME-Autostart-enabled=true
 1. `sudo reboot` で再起動。
 2. ログイン完了後、Chromium が kiosk モードで起動し Document Viewer が表示されることを確認。
 3. `documents/<部品番号>.pdf` を更新すると、ブラウザ内で閲覧できる。
+
+> メモ: Pi5 のホスト名は Avahi により `raspi-server-*.local` に変わる場合があります。Window A から参照する際は実際に `hostnamectl` や `avahi-browse -rt _workstation._tcp` で確認したホスト名を `VIEWER_API_BASE` / `VIEWER_SOCKET_BASE` に設定し、疎通は `ping <ホスト名>` で確認してください。
 
 ## 10. ミラー検証期間中の日次チェック
 - RaspberryPiServer 側の日次チェックリスト（`docs/test-notes/mirror-check-template.md`）に合わせ、DocumentViewer では以下を確認・記録する。
