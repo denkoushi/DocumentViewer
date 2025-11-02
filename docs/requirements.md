@@ -50,5 +50,5 @@
 
 ## 9. 今後の課題
 - Socket.IO 断状態を UI で明示し、リトライ状況を表示する。
-- Playwright による E2E テストを `docs/e2e-plan.md` に沿って追加。
+- Playwright による E2E テストを `docs/e2e-plan.md` に沿って追加。※ 現時点では Window A リポジトリ (`tests/e2e/window-a-live.spec.ts`) で実機シナリオを運用中。DocumentViewer 単体の自動テスト観点を整理し、必要な stub/API を本リポジトリ側に追加する。
 - 多言語 UI・アクセシビリティ対応の検討。
