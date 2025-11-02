@@ -54,6 +54,8 @@ docs/test-notes/ 実機検証ログ・チェックリスト
 | `VIEWER_IMPORT_FAILED_DIR` | 取り込み失敗時に退避するフォルダ | `~/DocumentViewer/imports/failed` |
 | `VIEWER_LOG_PATH` | ローテーション付きログの出力先 | 未出力 |
 
+Pi5・Window A と同じ Bearer トークンを利用するため、ローテーション時は RaspberryPiServer RUNBOOK（4章）に従って `VIEWER_API_TOKEN` と Pi5 側の `API_TOKEN` / `VIEWER_API_TOKEN`、Window A 側 `RASPI_SERVER_API_TOKEN` を同時に更新してください。
+
 ### テスト
 
 `pytest` を使って Flask ビューアの設定や API 応答を検証できます。

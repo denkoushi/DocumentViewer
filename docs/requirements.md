@@ -32,7 +32,7 @@
 - **応答時間**: イベント受信から 3 秒以内に PDF の 1 ページ目を表示。
 - **可用性**: Socket.IO 断時は UI で警告し 5 秒間隔で自動再接続。復旧時は成功メッセージを表示。
 - **保守性**: 実機検証ログを `docs/test-notes/` に残し、14 日耐久チェック (`docs/test-notes/2025-11-01-14day-check.md`) へ転記。
-- **セキュリティ**: REST API へのアクセスは RaspberryPiServer と同一トークンポリシーを用いる。ログに失敗理由を記録。
+- **セキュリティ**: REST API へのアクセスは RaspberryPiServer と同一トークンポリシーを用いる。ログに失敗理由を記録。ローテーション時は RaspberryPiServer RUNBOOK（4章）に従い、`VIEWER_API_TOKEN` と Pi5/Window A/OnSiteLogistics 側のトークンを同じ値で更新する。
 
 ## 7. ファイル構成
 ```
