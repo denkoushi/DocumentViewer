@@ -315,7 +315,7 @@
     });
     socketEvents.forEach((eventName) => {
       socket.on(eventName, (payload) => {
-        console.debug('Socket event', eventName, payload);
+        console.debug('[dv] Socket event', eventName, payload);
         logSocketEvent(eventName, payload);
         handleSocketPayload(payload);
       });
