@@ -16,8 +16,14 @@
   };
   const acceptDeviceIds = normalizeList(config.acceptDeviceIds);
   const acceptLocationCodes = normalizeList(config.acceptLocationCodes);
+  const normalizeSocketEvents = (value) => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item) => item.length > 0);
+  };
   const socketEvents = (() => {
-    const configured = normalizeList(config.socketEvents);
+    const configured = normalizeSocketEvents(config.socketEvents);
     if (configured.length) {
       return [...new Set(configured)];
     }
