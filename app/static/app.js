@@ -33,15 +33,6 @@
   const logSocketEvent = (eventName, payload) => {
     const body = JSON.stringify({ event: eventName, payload });
     const endpoint = buildApiUrl('/api/socket-events');
-    if (navigator.sendBeacon) {
-      try {
-        const blob = new Blob([body], { type: 'application/json' });
-        navigator.sendBeacon(endpoint, blob);
-        return;
-      } catch (_) {
-        // sendBeacon が利用できない場合は fetch へフォールバック
-      }
-    }
     fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
