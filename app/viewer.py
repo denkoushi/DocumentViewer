@@ -13,6 +13,7 @@ from flask import (
     current_app,
     jsonify,
     render_template,
+    request,
     send_from_directory,
     url_for,
 )
@@ -52,6 +53,38 @@ def _parse_csv_env(name: str) -> list[str]:
 
 ACCEPT_DEVICE_IDS = _parse_csv_env("VIEWER_ACCEPT_DEVICE_IDS")
 ACCEPT_LOCATION_CODES = _parse_csv_env("VIEWER_ACCEPT_LOCATION_CODES")
+
+
+def _resolve_socket_events() -> list[str]:
+    """
+    Resolve the list of Socket.IOイベント名.
+
+    優先順位:
+    1. `VIEWER_SOCKET_EVENTS`（カンマ区切り）
+    2. `VIEWER_SOCKET_EVENT`（単一指定）
+    3. 互換性維持のための既定リスト
+    """
+
+    events = _parse_csv_env("VIEWER_SOCKET_EVENTS")
+    single_event = os.getenv("VIEWER_SOCKET_EVENT", "").strip()
+    if single_event:
+        events.append(single_event)
+
+    if not events:
+        events = ["scan.ingested", "part_location_updated", "scan_update"]
+
+    seen = set()
+    deduped: list[str] = []
+    for event in events:
+        normalized = event.strip()
+        if not normalized or normalized in seen:
+            continue
+        deduped.append(normalized)
+        seen.add(normalized)
+    return deduped
+
+
+SOCKET_EVENTS = _resolve_socket_events()
 
 
 def _build_socket_script_url() -> str | None:
@@ -142,6 +175,7 @@ def index():
             "socketBase": SOCKET_BASE,
             "socketPath": SOCKET_PATH,
             "socketAutoOpen": SOCKET_AUTO_OPEN,
+            "socketEvents": SOCKET_EVENTS,
             "acceptDeviceIds": ACCEPT_DEVICE_IDS,
             "acceptLocationCodes": ACCEPT_LOCATION_CODES,
         },
@@ -181,6 +215,17 @@ def api_get_document(part_number: str):
         "filename": filename,
         "url": document_url_with_cache,
     })
+
+
+@app.route("/api/socket-events", methods=["POST"])
+def api_log_socket_event():
+    if not request.is_json:
+        return jsonify({"logged": False, "error": "invalid payload"}), 400
+    data = request.get_json(silent=True) or {}
+    event_name = str(data.get("event") or "unknown").strip() or "unknown"
+    payload = data.get("payload")
+    _log_info("Socket.IO event: %s payload=%s", event_name, payload)
+    return jsonify({"logged": True}), 201
 
 
 if __name__ == "__main__":

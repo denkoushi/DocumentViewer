@@ -16,6 +16,33 @@
   };
   const acceptDeviceIds = normalizeList(config.acceptDeviceIds);
   const acceptLocationCodes = normalizeList(config.acceptLocationCodes);
+  const socketEvents = (() => {
+    const configured = normalizeList(config.socketEvents);
+    if (configured.length) {
+      return [...new Set(configured)];
+    }
+    return ['scan.ingested', 'part_location_updated', 'scan_update'];
+  })();
+
+  const logSocketEvent = (eventName, payload) => {
+    const body = JSON.stringify({ event: eventName, payload });
+    const endpoint = buildApiUrl('/api/socket-events');
+    if (navigator.sendBeacon) {
+      try {
+        const blob = new Blob([body], { type: 'application/json' });
+        navigator.sendBeacon(endpoint, blob);
+        return;
+      } catch (_) {
+        // sendBeacon が利用できない場合は fetch へフォールバック
+      }
+    }
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+    }).catch(() => {});
+  };
 
   const buildApiUrl = (path) => {
     const normalized = path.startsWith('/') ? path : `/${path}`;
@@ -289,8 +316,13 @@
       console.error('Socket connect_error', error);
       updateSocketStatus('error', socketLabel.error);
     });
-    socket.on('part_location_updated', handleSocketPayload);
-    socket.on('scan_update', handleSocketPayload);
+    socketEvents.forEach((eventName) => {
+      socket.on(eventName, (payload) => {
+        console.debug('Socket event', eventName, payload);
+        logSocketEvent(eventName, payload);
+        handleSocketPayload(payload);
+      });
+    });
     if (socket.io && typeof socket.io.on === 'function') {
       socket.io.on('reconnect_attempt', () => updateSocketStatus('connecting'));
       socket.io.on('reconnect', () => updateSocketStatus('live'));

@@ -16,6 +16,7 @@ def viewer_module(monkeypatch, tmp_path):
     monkeypatch.setenv("VIEWER_SOCKET_BASE", "http://example.com/socket/")
     monkeypatch.setenv("VIEWER_SOCKET_PATH", "custom")
     monkeypatch.setenv("VIEWER_SOCKET_AUTO_OPEN", "0")
+    monkeypatch.setenv("VIEWER_SOCKET_EVENTS", "scan.ingested, scan_update")
     monkeypatch.setenv("VIEWER_ACCEPT_DEVICE_IDS", "HANDHELD-01, HANDHELD-02")
     monkeypatch.setenv("VIEWER_ACCEPT_LOCATION_CODES", "RACK-A1, RACK-A2")
     monkeypatch.setenv("VIEWER_LOG_PATH", str(log_path))
@@ -59,10 +60,13 @@ def test_index_injects_config(viewer_module):
     assert '"socketAutoOpen": false' in html
     assert "HANDHELD-01" in html
     assert "RACK-A1" in html
+    assert "scan.ingested" in html
+    assert "scan_update" in html
 
     assert viewer_module.module.SOCKET_AUTO_OPEN is False
     assert viewer_module.module.ACCEPT_DEVICE_IDS == ["HANDHELD-01", "HANDHELD-02"]
     assert viewer_module.module.ACCEPT_LOCATION_CODES == ["RACK-A1", "RACK-A2"]
+    assert viewer_module.module.SOCKET_EVENTS == ["scan.ingested", "scan_update"]
 
 
 def test_api_documents_endpoint(viewer_module):
@@ -104,3 +108,21 @@ def test_serve_document_invalid_path_logs_warning(viewer_module):
     assert response.status_code == 404
     log_text = _read_log(viewer_module)
     assert "Invalid document access attempt: ../../etc/passwd" in log_text
+
+
+def test_api_socket_events_logs_payload(viewer_module):
+    client = viewer_module.module.app.test_client()
+    response = client.post(
+        "/api/socket-events",
+        json={"event": "scan.ingested", "payload": {"order_code": "T-1"}},
+    )
+    assert response.status_code == 201
+    log_text = _read_log(viewer_module)
+    assert "Socket.IO event: scan.ingested" in log_text
+    assert "'order_code': 'T-1'" in log_text
+
+
+def test_api_socket_events_rejects_non_json(viewer_module):
+    client = viewer_module.module.app.test_client()
+    response = client.post("/api/socket-events", data="not-json", headers={"Content-Type": "text/plain"})
+    assert response.status_code == 400
