@@ -48,6 +48,7 @@ docs/test-notes/ 実機検証ログ・チェックリスト
 | `VIEWER_SOCKET_BASE` | Socket.IO の接続先ベース URL | `VIEWER_API_BASE` |
 | `VIEWER_SOCKET_PATH` | Socket.IO のパス | `/socket.io` |
 | `VIEWER_SOCKET_AUTO_OPEN` | Socket.IO を自動で開くか (`0`/`1`) | `1` |
+| `VIEWER_SOCKET_CLIENT_SRC` | Socket.IO クライアント JS の取得元 | `https://cdn.socket.io/4.7.5/socket.io.min.js` |
 | `VIEWER_SOCKET_EVENTS` | 購読する Socket.IO イベント名（カンマ区切り） | `scan.ingested,part_location_updated,scan_update` |
 | `VIEWER_SOCKET_EVENT` | 上記と同等の単一イベント指定（互換用） | 未設定 |
 | `VIEWER_ACCEPT_DEVICE_IDS` | 受信対象の `device_id` をカンマ区切りで指定 | 未指定で全受信 |

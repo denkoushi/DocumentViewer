@@ -40,6 +40,10 @@ API_TOKEN = os.getenv("VIEWER_API_TOKEN")
 SOCKET_BASE = os.getenv("VIEWER_SOCKET_BASE", API_BASE)
 SOCKET_PATH = os.getenv("VIEWER_SOCKET_PATH", "/socket.io")
 SOCKET_AUTO_OPEN = os.getenv("VIEWER_SOCKET_AUTO_OPEN", "1").lower() not in {"0", "false", "no"}
+SOCKET_CLIENT_SRC = os.getenv(
+    "VIEWER_SOCKET_CLIENT_SRC",
+    "https://cdn.socket.io/4.7.5/socket.io.min.js",
+)
 LOG_PATH_RAW = os.getenv("VIEWER_LOG_PATH", "").strip()
 LOG_PATH = Path(LOG_PATH_RAW).expanduser().resolve() if LOG_PATH_RAW else None
 
@@ -88,6 +92,9 @@ SOCKET_EVENTS = _resolve_socket_events()
 
 
 def _build_socket_script_url() -> str | None:
+    override = SOCKET_CLIENT_SRC.strip() if SOCKET_CLIENT_SRC else ""
+    if override:
+        return override
     if not SOCKET_BASE:
         return None
     base = SOCKET_BASE.rstrip("/")
